@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "waitnsee",
-    "slug": "waitnsee",
+    "name": "client-waitnsee",
+    "slug": "client-waitnsee",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "waitnsee",
+    "scheme": "client-waitnsee",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

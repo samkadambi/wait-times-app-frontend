@@ -1,0 +1,195 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_BASE_URL = 'http://localhost:3001/api';
+
+export default function RegisterScreen() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [interests, setInterests] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!name.trim() || !email.trim()) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          city: city.trim(),
+          interests: interests.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        router.replace('/app/home');
+      } else {
+        Alert.alert('Error', data.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    router.back();
+  };
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: 'white' }}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24 }}>
+          {/* Header */}
+          <View style={{ alignItems: 'center', marginBottom: 32 }}>
+            <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#2563eb', marginBottom: 8 }}>
+              Create Account
+            </Text>
+            <Text style={{ color: '#6b7280', textAlign: 'center' }}>
+              Join WaitNSee to help others and stay informed
+            </Text>
+          </View>
+
+          {/* Registration Form */}
+          <View style={{ gap: 16 }}>
+            <View>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Name *</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#d1d5db',
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  fontSize: 16,
+                }}
+                placeholder="Enter your full name"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Email *</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#d1d5db',
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  fontSize: 16,
+                }}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>City</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#d1d5db',
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  fontSize: 16,
+                }}
+                placeholder="Enter your city"
+                value={city}
+                onChangeText={setCity}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Interests</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#d1d5db',
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  fontSize: 16,
+                }}
+                placeholder="e.g., basketball, restaurants, bars"
+                value={interests}
+                onChangeText={setInterests}
+                multiline
+                numberOfLines={2}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={{
+                borderRadius: 8,
+                paddingVertical: 16,
+                marginTop: 24,
+                backgroundColor: isLoading ? '#9ca3af' : '#2563eb',
+              }}
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600', fontSize: 18 }}>
+                {isLoading ? 'Creating Account...' : 'Create Account'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ paddingVertical: 16 }}
+              onPress={handleBackToLogin}
+            >
+              <Text style={{ color: '#2563eb', textAlign: 'center', fontWeight: '500' }}>
+                Already have an account? Sign In
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer */}
+          <View style={{ marginTop: 32 }}>
+            <Text style={{ color: '#6b7280', textAlign: 'center', fontSize: 14 }}>
+              By creating an account, you agree to our Terms of Service and Privacy Policy
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+} 
