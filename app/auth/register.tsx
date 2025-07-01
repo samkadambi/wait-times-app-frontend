@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,20 +9,34 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
 export default function RegisterScreen() {
-  const [name, setName] = useState('');
+  const [first_name, setFirstName] = useState('');
+  const [last_name, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [city, setCity] = useState('');
+  const [password, setPassword] = useState('');
+  const [location, setLocation] = useState('');
   const [interests, setInterests] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cities, setCities] = useState([]);
+
+  const fetchCities = async () => {
+    const response = await fetch(`${API_BASE_URL}/cities`);
+    const data = await response.json();
+    setCities(data);
+  }
+
+  useEffect(() => {
+    fetchCities();
+  }, []);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim()) {
+    if (!first_name.trim() || !last_name.trim() || !email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
@@ -35,9 +49,11 @@ export default function RegisterScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: name.trim(),
+          first_name: first_name.trim(),
+          last_name: last_name.trim(),
           email: email.trim(),
-          city: city.trim(),
+          password: password.trim(),
+          location: location.trim(),
           interests: interests.trim(),
         }),
       });
@@ -83,7 +99,7 @@ export default function RegisterScreen() {
           {/* Registration Form */}
           <View style={{ gap: 16 }}>
             <View>
-              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Name *</Text>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>First Name *</Text>
               <TextInput
                 style={{
                   borderWidth: 1,
@@ -93,9 +109,26 @@ export default function RegisterScreen() {
                   paddingVertical: 12,
                   fontSize: 16,
                 }}
-                placeholder="Enter your full name"
-                value={name}
-                onChangeText={setName}
+                placeholder="Enter your first name"
+                value={first_name}
+                onChangeText={setFirstName}
+                autoCapitalize="words"
+              />
+            </View>
+            <View>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Last Name *</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#d1d5db',
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  fontSize: 16,
+                }}
+                placeholder="Enter your last name"
+                value={last_name}
+                onChangeText={setLastName}
                 autoCapitalize="words"
               />
             </View>
@@ -121,7 +154,7 @@ export default function RegisterScreen() {
             </View>
 
             <View>
-              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>City</Text>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Password *</Text>
               <TextInput
                 style={{
                   borderWidth: 1,
@@ -131,11 +164,34 @@ export default function RegisterScreen() {
                   paddingVertical: 12,
                   fontSize: 16,
                 }}
-                placeholder="Enter your city"
-                value={city}
-                onChangeText={setCity}
-                autoCapitalize="words"
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={true}
               />
+            </View>
+
+            <View>
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Location</Text>
+              <View style={{
+                borderWidth: 1,
+                borderColor: '#d1d5db',
+                borderRadius: 8,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                backgroundColor: 'white',
+              }}>
+                <Picker
+                  selectedValue={location}
+                  onValueChange={(itemValue) => setLocation(itemValue)}
+                  style={{ fontSize: 16 }}
+                >
+                  <Picker.Item label="Select a city" value="" />
+                  {cities.map((city) => (
+                    <Picker.Item key={city} label={city} value={city} />
+                  ))}
+                </Picker>
+              </View>
             </View>
 
             <View>

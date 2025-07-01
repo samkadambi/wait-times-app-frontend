@@ -7,6 +7,7 @@ import {
   RefreshControl,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,7 +19,7 @@ interface Location {
   id: number;
   name: string;
   address: string;
-  city: string;
+  city_name: string;
   type: 'park' | 'restaurant' | 'bar' | 'other';
   img_url: string;
   busyness_level: string;
@@ -26,6 +27,7 @@ interface Location {
   update_count: number;
   latest_comment: string;
   last_updated: string;
+  is_favorite?: boolean;
 }
 
 export default function HomeScreen() {
@@ -35,17 +37,39 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCity, setSelectedCity] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showFavorites, setShowFavorites] = useState<boolean>(false);
   const [types, setTypes] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
+    loadUserData();
     fetchData();
   }, []);
 
+  const loadUserData = async () => {
+    try {
+      const userDataString = await AsyncStorage.getItem('userData');
+      if (userDataString) {
+        setUserData(JSON.parse(userDataString));
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
   const fetchData = async () => {
     try {
-      const [locationsRes, typesRes, citiesRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/locations`),
+      let locationsRes;
+      
+      if (showFavorites && userData) {
+        locationsRes = await fetch(`${API_BASE_URL}/locations/user/${userData.id}/favorites`);
+      } else {
+        locationsRes = await fetch(`${API_BASE_URL}/locations/data`);
+      }
+
+      const [typesRes, citiesRes] = await Promise.all([
         fetch(`${API_BASE_URL}/locations/types`),
         fetch(`${API_BASE_URL}/locations/cities`),
       ]);
@@ -72,19 +96,60 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
+  const toggleFavorite = async (locationId: number) => {
+    if (!userData) {
+      Alert.alert('Error', 'Please log in to favorite locations');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/locations/${locationId}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userData.id,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh the data to show updated favorite status
+        await fetchData();
+      } else {
+        Alert.alert('Error', 'Failed to update favorite');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
+    }
+  };
+
   useEffect(() => {
     let filtered = locations;
 
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(location => 
+        location.name.toLowerCase().includes(query) ||
+        location.address.toLowerCase().includes(query) ||
+        location.city_name.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by type
     if (selectedType !== 'all') {
       filtered = filtered.filter(location => location.type === selectedType);
     }
 
+    // Filter by city
     if (selectedCity !== 'all') {
-      filtered = filtered.filter(location => location.city === selectedCity);
+      filtered = filtered.filter(location => location.city_name === selectedCity);
     }
 
     setFilteredLocations(filtered);
-  }, [selectedType, selectedCity, locations]);
+  }, [selectedType, selectedCity, searchQuery, locations, showFavorites]);
 
   const getBusynessColor = (level: string) => {
     switch (level) {
@@ -154,7 +219,9 @@ export default function HomeScreen() {
         borderWidth: 1,
         borderColor: '#f3f4f6',
       }}
-      onPress={() => router.push(`/app/location/${item.id}`)}
+      onPress={() => {
+        router.push(`/app/location/${item.id}`);
+      }}
     >
       <View style={{ padding: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -169,20 +236,32 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 18, fontWeight: '600', color: '#1f2937' }}>
                 {item.name}
               </Text>
-              <Text style={{ fontSize: 14, color: '#6b7280' }}>{item.city}</Text>
+              <Text style={{ fontSize: 14, color: '#6b7280' }}>{item.city_name || 'Unknown City'}</Text>
             </View>
           </View>
-          <View
-            style={{
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              borderRadius: 20,
-              backgroundColor: getBusynessColor(item.busyness_level),
-            }}
-          >
-            <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>
-              {getBusynessText(item.busyness_level)}
-            </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={() => toggleFavorite(item.id)}
+              style={{ padding: 8, marginRight: 8 }}
+            >
+              <Ionicons 
+                name={item.is_favorite ? "star" : "star-outline"} 
+                size={20} 
+                color={item.is_favorite ? "#f59e0b" : "#9ca3af"} 
+              />
+            </TouchableOpacity>
+            <View
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 20,
+                backgroundColor: getBusynessColor(item.busyness_level),
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>
+                {getBusynessText(item.busyness_level)}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -252,21 +331,103 @@ export default function HomeScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>WaitNSee</Text>
-            <Text style={{ color: '#6b7280' }}>Find your perfect spot</Text>
+            <Text style={{ color: '#6b7280' }}>Know before you go</Text>
           </View>
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={{ padding: 8 }}
-          >
-            <Ionicons name="log-out-outline" size={24} color="#6b7280" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={() => {
+                console.log('Profile button pressed');
+                try {
+                  router.push('/app/profile');
+                } catch (error) {
+                  console.error('Navigation error:', error);
+                  Alert.alert('Error', 'Could not navigate to profile');
+                }
+              }}
+              style={{ padding: 8, marginRight: 8 }}
+            >
+              <Ionicons name="person-outline" size={24} color="#6b7280" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={{ padding: 8 }}
+            >
+              <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {/* Search Bar */}
+      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#f3f4f6',
+          borderRadius: 12,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+        }}>
+          <Ionicons name="search" size={20} color="#6b7280" style={{ marginRight: 12 }} />
+          <TextInput
+            style={{
+              flex: 1,
+              fontSize: 16,
+              color: '#1f2937',
+            }}
+            placeholder="Search locations, addresses, or cities..."
+            placeholderTextColor="#9ca3af"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            clearButtonMode="while-editing"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              style={{ marginLeft: 8 }}
+            >
+              <Ionicons name="close-circle" size={20} color="#6b7280" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
       {/* Filters */}
       <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-        <Text style={{ fontSize: 14, fontWeight: '500', color: '#374151', marginBottom: 12 }}>Type</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={{ fontSize: 14, fontWeight: '500', color: '#374151' }}>Type</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setShowFavorites(!showFavorites);
+              setSelectedType('all');
+              setSelectedCity('all');
+              setSearchQuery('');
+            }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 16,
+              backgroundColor: showFavorites ? '#f59e0b' : '#f3f4f6',
+            }}
+          >
+            <Ionicons 
+              name="star" 
+              size={16} 
+              color={showFavorites ? 'white' : '#6b7280'} 
+              style={{ marginRight: 4 }}
+            />
+            <Text style={{ 
+              fontSize: 12, 
+              fontWeight: '500', 
+              color: showFavorites ? 'white' : '#6b7280' 
+            }}>
+              Favorites
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
           {renderFilterButton('All', 'all', selectedType, () =>
             setSelectedType('all')
           )}
@@ -308,13 +469,41 @@ export default function HomeScreen() {
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
             <Ionicons name="location-outline" size={64} color="#9ca3af" />
-            <Text style={{ color: '#6b7280', fontSize: 18, marginTop: 16 }}>No locations found</Text>
+            <Text style={{ color: '#6b7280', fontSize: 18, marginTop: 16 }}>
+              {searchQuery.trim() ? 'No locations found' : 'No locations found'}
+            </Text>
             <Text style={{ color: '#9ca3af', textAlign: 'center', marginTop: 8 }}>
-              Try adjusting your filters or check back later
+              {searchQuery.trim() 
+                ? `No results for "${searchQuery}". Try adjusting your search or filters.`
+                : 'Try adjusting your filters or check back later'
+              }
             </Text>
           </View>
         }
       />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: '#2563eb',
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
+        }}
+        onPress={() => router.push('/app/post-update')}
+      >
+        <Ionicons name="add" size={32} color="white" />
+      </TouchableOpacity>
     </View>
   );
 } 
