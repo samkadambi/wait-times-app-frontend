@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,13 +40,25 @@ interface Update {
   downvotes: number;
 }
 
+interface Comment {
+  id: number;
+  user_name: string;
+  comment: string;
+  created_at: string;
+  user_id: number;
+}
+
 export default function LocationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [location, setLocation] = useState<Location | null>(null);
   const [updates, setUpdates] = useState<Update[]>([]);
+  const [comments, setComments] = useState<{ [updateId: number]: Comment[] }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  const [expandedUpdate, setExpandedUpdate] = useState<number | null>(null);
+  const [newComment, setNewComment] = useState<string>('');
+  const [commentingOn, setCommentingOn] = useState<number | null>(null);
 
   useEffect(() => {
     loadUserData();
@@ -87,6 +100,22 @@ export default function LocationDetailScreen() {
       if (updatesRes.ok) {
         const updatesData = await updatesRes.json();
         setUpdates(updatesData);
+        
+        // Fetch comments for each update
+        const commentsData: { [updateId: number]: Comment[] } = {};
+        for (const update of updatesData) {
+          try {
+            const commentsRes = await fetch(`${API_BASE_URL}/comments/update/${update.id}`);
+            if (commentsRes.ok) {
+              const updateComments = await commentsRes.json();
+              commentsData[update.id] = updateComments;
+            }
+          } catch (error) {
+            console.error(`Error fetching comments for update ${update.id}:`, error);
+            commentsData[update.id] = [];
+          }
+        }
+        setComments(commentsData);
       }
     } catch (error) {
       console.error('Error fetching location data:', error);
@@ -185,6 +214,79 @@ export default function LocationDetailScreen() {
       }
     } catch (error) {
       console.error('Error voting:', error);
+    }
+  };
+
+  const handlePostComment = async (updateId: number) => {
+    if (!newComment.trim() || !userData) {
+      Alert.alert('Error', 'Please enter a comment and make sure you are logged in');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userData.id,
+          update_id: updateId,
+          comment: newComment.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        setNewComment('');
+        setCommentingOn(null);
+        // Refresh comments for this update
+        const commentsRes = await fetch(`${API_BASE_URL}/comments/update/${updateId}`);
+        if (commentsRes.ok) {
+          const updateComments = await commentsRes.json();
+          setComments(prev => ({
+            ...prev,
+            [updateId]: updateComments
+          }));
+        }
+      } else {
+        Alert.alert('Error', 'Failed to post comment');
+      }
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number, updateId: number) => {
+    if (!userData) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userData.id,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh comments for this update
+        const commentsRes = await fetch(`${API_BASE_URL}/comments/update/${updateId}`);
+        if (commentsRes.ok) {
+          const updateComments = await commentsRes.json();
+          setComments(prev => ({
+            ...prev,
+            [updateId]: updateComments
+          }));
+        }
+      } else {
+        Alert.alert('Error', 'Failed to delete comment');
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
     }
   };
 
@@ -361,16 +463,116 @@ export default function LocationDetailScreen() {
                   />
                 )}
 
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }} onPress={() => handleVote(update.id, 1)}>
-                    <Ionicons name="thumbs-up-outline" size={16} color="green" style={{ marginRight: 4 }} />
-                    <Text style={{ fontSize: 14, color: '#6b7280' }}>{update.upvotes}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }} onPress={() => handleVote(update.id, -1)}>
-                    <Ionicons name="thumbs-down-outline" size={16} color="red" style={{ marginRight: 4 }} />
-                    <Text style={{ fontSize: 14, color: '#6b7280' }}>{update.downvotes}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }} onPress={() => handleVote(update.id, 1)}>
+                      <Ionicons name="thumbs-up-outline" size={16} color="green" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 14, color: '#6b7280' }}>{update.upvotes}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }} onPress={() => handleVote(update.id, -1)}>
+                      <Ionicons name="thumbs-down-outline" size={16} color="red" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 14, color: '#6b7280' }}>{update.downvotes}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={{ flexDirection: 'row', alignItems: 'center' }} 
+                      onPress={() => setExpandedUpdate(expandedUpdate === update.id ? null : update.id)}
+                    >
+                      <Ionicons name="chatbubble-outline" size={16} color="#6b7280" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 14, color: '#6b7280' }}>
+                        {comments[update.id]?.length || 0} comments
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setCommentingOn(commentingOn === update.id ? null : update.id)
+                      setExpandedUpdate(expandedUpdate === update.id ? null : update.id)
+                    }}
+                    style={{ padding: 4 }}
+                  >
+                    <Ionicons name="chatbubble-ellipses-outline" size={20} color="#2563eb" />
                   </TouchableOpacity>
                 </View>
+
+                {/* Comments Section */}
+                {expandedUpdate === update.id && (
+                  <View style={{ marginTop: 12, borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 12 }}>
+                    {/* Comment Input */}
+                    {commentingOn === update.id && (
+                      <View style={{ marginBottom: 12 }}>
+                        <TextInput
+                          style={{
+                            borderWidth: 1,
+                            borderColor: '#d1d5db',
+                            borderRadius: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            fontSize: 14,
+                            minHeight: 40,
+                          }}
+                          placeholder="Write a comment..."
+                          value={newComment}
+                          onChangeText={setNewComment}
+                          multiline
+                        />
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 }}>
+                          <TouchableOpacity
+                            onPress={() => setCommentingOn(null)}
+                            style={{ marginRight: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                          >
+                            <Text style={{ color: '#6b7280' }}>Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => handlePostComment(update.id)}
+                            style={{
+                              backgroundColor: '#2563eb',
+                              paddingHorizontal: 12,
+                              paddingVertical: 6,
+                              borderRadius: 6,
+                            }}
+                          >
+                            <Text style={{ color: 'white', fontWeight: '500' }}>Post</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Comments List */}
+                    {comments[update.id]?.length > 0 ? (
+                      comments[update.id].map((comment) => (
+                        <View key={comment.id} style={{ marginBottom: 8, paddingLeft: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                            <View style={{ flex: 1 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 12, fontWeight: '500', color: '#1f2937' }}>
+                                  {comment.user_name}
+                                </Text>
+                                <Text style={{ fontSize: 11, color: '#9ca3af', marginLeft: 8 }}>
+                                  {formatTimeAgo(comment.created_at)}
+                                </Text>
+                              </View>
+                              <Text style={{ fontSize: 14, color: '#374151', lineHeight: 18 }}>
+                                {comment.comment}
+                              </Text>
+                            </View>
+                            {userData && comment.user_id === userData.id && (
+                              <TouchableOpacity
+                                onPress={() => handleDeleteComment(comment.id, update.id)}
+                                style={{ padding: 4, marginLeft: 8 }}
+                              >
+                                <Ionicons name="trash-outline" size={14} color="#ef4444" />
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', fontStyle: 'italic' }}>
+                        No comments yet
+                      </Text>
+                    )}
+                  </View>
+                )}
               </View>
             ))
           )}

@@ -45,8 +45,13 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadUserData();
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    if (userData) {
+      fetchData();
+    }
+  }, [userData, showFavorites]);
 
   const loadUserData = async () => {
     try {
@@ -69,6 +74,8 @@ export default function HomeScreen() {
         locationsRes = await fetch(`${API_BASE_URL}/locations/data`);
       }
 
+      console.log(locationsRes);
+
       const [typesRes, citiesRes] = await Promise.all([
         fetch(`${API_BASE_URL}/locations/types`),
         fetch(`${API_BASE_URL}/locations/cities`),
@@ -78,8 +85,31 @@ export default function HomeScreen() {
       const typesData = await typesRes.json();
       const citiesData = await citiesRes.json();
 
-      setLocations(locationsData);
-      setFilteredLocations(locationsData);
+      // If we're not showing favorites, we need to fetch favorite status for each location
+      if (!showFavorites && userData) {
+        try {
+          const favoritesRes = await fetch(`${API_BASE_URL}/locations/user/${userData.id}/favorites`);
+          const favoritesData = await favoritesRes.json();
+          const favoriteIds = new Set(favoritesData.map((fav: any) => fav.id));
+          
+          // Mark locations as favorite if they're in the user's favorites
+          const locationsWithFavorites = locationsData.map((location: Location) => ({
+            ...location,
+            is_favorite: favoriteIds.has(location.id)
+          }));
+          
+          setLocations(locationsWithFavorites);
+          setFilteredLocations(locationsWithFavorites);
+        } catch (error) {
+          console.error('Error fetching favorites:', error);
+          setLocations(locationsData);
+          setFilteredLocations(locationsData);
+        }
+      } else {
+        setLocations(locationsData);
+        setFilteredLocations(locationsData);
+      }
+      
       setTypes(typesData);
       setCities(citiesData);
     } catch (error) {
@@ -114,8 +144,21 @@ export default function HomeScreen() {
       });
 
       if (response.ok) {
-        // Refresh the data to show updated favorite status
-        await fetchData();
+        // Update local state immediately for better UX
+        setLocations(prevLocations => 
+          prevLocations.map(location => 
+            location.id === locationId 
+              ? { ...location, is_favorite: !location.is_favorite }
+              : location
+          )
+        );
+        setFilteredLocations(prevFiltered => 
+          prevFiltered.map(location => 
+            location.id === locationId 
+              ? { ...location, is_favorite: !location.is_favorite }
+              : location
+          )
+        );
       } else {
         Alert.alert('Error', 'Failed to update favorite');
       }
@@ -469,6 +512,9 @@ export default function HomeScreen() {
         ListEmptyComponent={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
             <Ionicons name="location-outline" size={64} color="#9ca3af" />
+            <Text style={{ color: '#6b7280', fontSize: 18, marginTop: 16 }}>
+              {showFavorites ? 'No favorites found' : 'No locations found'}
+            </Text>
             <Text style={{ color: '#6b7280', fontSize: 18, marginTop: 16 }}>
               {searchQuery.trim() ? 'No locations found' : 'No locations found'}
             </Text>

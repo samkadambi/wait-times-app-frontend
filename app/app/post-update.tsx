@@ -41,6 +41,7 @@ export default function PostUpdateScreen() {
   const [comment, setComment] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [userData, setUserData] = useState<User | null>(null);
 
   useEffect(() => {
@@ -71,15 +72,50 @@ export default function PostUpdateScreen() {
   };
 
   const pickImage = async () => {
+    console.log('Picking image');
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.8,
+      quality: 1,
     });
+
+    console.log('Result:', result);
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadImage = async (imageUri: string): Promise<string | null> => {
+    setIsUploadingImage(true);
+    try {
+      // Convert image URI to blob
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append('image', blob, 'image.jpg');
+      
+      // Upload to server
+      const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (uploadResponse.ok) {
+        const uploadData = await uploadResponse.json();
+        return uploadData.imageUrl;
+      } else {
+        throw new Error('Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
+      return null;
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -96,8 +132,18 @@ export default function PostUpdateScreen() {
 
     setIsLoading(true);
     try {
-      // For now, we'll skip image upload and just post the comment
-      // In a real app, you'd upload the image to a service like AWS S3 first
+      let uploadedImageUrl = null;
+      
+      // Upload image if one is selected
+      if (image) {
+        uploadedImageUrl = await uploadImage(image);
+        if (!uploadedImageUrl) {
+          setIsLoading(false);
+          return; // Stop if image upload failed
+        }
+      }
+
+      // Post the update with the uploaded image URL
       const response = await fetch(`${API_BASE_URL}/updates`, {
         method: 'POST',
         headers: {
@@ -107,7 +153,7 @@ export default function PostUpdateScreen() {
           user_id: userData.id,
           location_id: selectedLocation,
           message: comment.trim(),
-          img_url: image || null, // In production, this would be the uploaded image URL
+          img_url: uploadedImageUrl,
         }),
       });
 
@@ -214,27 +260,66 @@ export default function PostUpdateScreen() {
             <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
               Add Photo (Optional)
             </Text>
-            <TouchableOpacity
-              style={{
-                borderWidth: 2,
-                borderColor: '#d1d5db',
-                borderStyle: 'dashed',
-                borderRadius: 8,
-                padding: 20,
-                alignItems: 'center',
-                backgroundColor: '#f9fafb',
-              }}
-              onPress={pickImage}
-            >
-              {image ? (
-                <Image source={{ uri: image }} style={{ width: 200, height: 150, borderRadius: 8 }} />
-              ) : (
+            {image ? (
+              <View style={{ position: 'relative' }}>
+                <Image 
+                  source={{ uri: image }} 
+                  style={{ 
+                    width: '100%', 
+                    height: 200, 
+                    borderRadius: 8,
+                    marginBottom: 8
+                  }} 
+                />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#f3f4f6',
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                    }}
+                    onPress={pickImage}
+                  >
+                    <Text style={{ color: '#374151', fontWeight: '500' }}>Change Photo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#ef4444',
+                      paddingVertical: 12,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                    }}
+                    onPress={() => setImage(null)}
+                  >
+                    <Text style={{ color: 'white', fontWeight: '500' }}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={{
+                  borderWidth: 2,
+                  borderColor: '#d1d5db',
+                  borderStyle: 'dashed',
+                  borderRadius: 8,
+                  padding: 20,
+                  alignItems: 'center',
+                  backgroundColor: '#f9fafb',
+                }}
+                onPress={pickImage}
+              >
                 <View style={{ alignItems: 'center' }}>
                   <Text style={{ fontSize: 48, color: '#9ca3af' }}>📷</Text>
                   <Text style={{ color: '#6b7280', marginTop: 8 }}>Tap to add a photo</Text>
+                  <Text style={{ color: '#9ca3af', fontSize: 12, marginTop: 4 }}>
+                    Max 5MB • JPG, PNG
+                  </Text>
                 </View>
-              )}
-            </TouchableOpacity>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Submit Button */}
@@ -243,16 +328,23 @@ export default function PostUpdateScreen() {
               borderRadius: 8,
               paddingVertical: 16,
               marginTop: 24,
-              backgroundColor: isLoading ? '#9ca3af' : '#2563eb',
+              backgroundColor: (isLoading || isUploadingImage) ? '#9ca3af' : '#2563eb',
             }}
             onPress={handlePostUpdate}
-            disabled={isLoading}
+            disabled={isLoading || isUploadingImage}
           >
             {isLoading ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator color="white" style={{ marginRight: 8 }} />
                 <Text style={{ color: 'white', fontWeight: '600', fontSize: 18 }}>
                   Posting...
+                </Text>
+              </View>
+            ) : isUploadingImage ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator color="white" style={{ marginRight: 8 }} />
+                <Text style={{ color: 'white', fontWeight: '600', fontSize: 18 }}>
+                  Uploading Image...
                 </Text>
               </View>
             ) : (
