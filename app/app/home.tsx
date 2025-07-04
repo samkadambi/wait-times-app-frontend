@@ -8,10 +8,11 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../hooks/useAuth';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -41,35 +42,19 @@ export default function HomeScreen() {
   const [showFavorites, setShowFavorites] = useState<boolean>(false);
   const [types, setTypes] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
-  const [userData, setUserData] = useState<any>(null);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
-    loadUserData();
+    fetchData();
+    fetchCities();
   }, []);
-
-  useEffect(() => {
-    if (userData) {
-      fetchData();
-    }
-  }, [userData, showFavorites]);
-
-  const loadUserData = async () => {
-    try {
-      const userDataString = await AsyncStorage.getItem('userData');
-      if (userDataString) {
-        setUserData(JSON.parse(userDataString));
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
 
   const fetchData = async () => {
     try {
       let locationsRes;
       
-      if (showFavorites && userData) {
-        locationsRes = await fetch(`${API_BASE_URL}/locations/user/${userData.id}/favorites`);
+      if (showFavorites && user) {
+        locationsRes = await fetch(`${API_BASE_URL}/locations/user/${user.id}/favorites`);
       } else {
         locationsRes = await fetch(`${API_BASE_URL}/locations/data`);
       }
@@ -86,9 +71,9 @@ export default function HomeScreen() {
       const citiesData = await citiesRes.json();
 
       // If we're not showing favorites, we need to fetch favorite status for each location
-      if (!showFavorites && userData) {
+      if (!showFavorites && user) {
         try {
-          const favoritesRes = await fetch(`${API_BASE_URL}/locations/user/${userData.id}/favorites`);
+          const favoritesRes = await fetch(`${API_BASE_URL}/locations/user/${user.id}/favorites`);
           const favoritesData = await favoritesRes.json();
           const favoriteIds = new Set(favoritesData.map((fav: any) => fav.id));
           
@@ -120,6 +105,18 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchCities = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cities`);
+      if (response.ok) {
+        const data = await response.json();
+        setCities(data);
+      }
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchData();
@@ -127,7 +124,7 @@ export default function HomeScreen() {
   };
 
   const toggleFavorite = async (locationId: number) => {
-    if (!userData) {
+    if (!user) {
       Alert.alert('Error', 'Please log in to favorite locations');
       return;
     }
@@ -139,7 +136,7 @@ export default function HomeScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: userData.id,
+          user_id: user.id,
         }),
       });
 
@@ -239,9 +236,7 @@ export default function HomeScreen() {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('userData');
-      router.replace('/auth/login');
+      await logout();
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -389,7 +384,24 @@ export default function HomeScreen() {
               }}
               style={{ padding: 8, marginRight: 8 }}
             >
-              <Ionicons name="person-outline" size={24} color="#6b7280" />
+              {user?.profile_pic_url ? (
+                <View style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                }}>
+                  <Image
+                    source={{ uri: user.profile_pic_url }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  />
+                </View>
+              ) : (
+                <Ionicons name="person-outline" size={24} color="#6b7280" />
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleLogout}

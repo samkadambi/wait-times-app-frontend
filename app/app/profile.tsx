@@ -9,32 +9,26 @@ import {
   Image,
 } from 'react-native';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../hooks/useAuth';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  location: string;
-  created_at: string;
-}
-
 interface UserUpdate {
   id: number;
-  location_name: string;
-  message: string;
-  date: string;
+  location_id: number;
+  user_id: number;
+  wait_time: number;
+  busyness_level: string;
+  comment: string;
+  created_at: string;
   upvotes: number;
   downvotes: number;
+  location_name: string;
 }
 
 export default function ProfileScreen() {
   console.log('ProfileScreen component rendered');
-  const [user, setUser] = useState<User | null>(null);
   const [userUpdates, setUserUpdates] = useState<UserUpdate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -43,26 +37,25 @@ export default function ProfileScreen() {
     totalDownvotes: 0,
     averageRating: 0,
   });
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     console.log('ProfileScreen useEffect triggered');
-    loadUserProfile();
-  }, []);
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user]);
 
   const loadUserProfile = async () => {
+    if (!user) {
+      Alert.alert('Error', 'User data not found. Please log in again.');
+      router.replace('/auth/login');
+      return;
+    }
+
     try {
-      const userDataString = await AsyncStorage.getItem('userData');
-      if (!userDataString) {
-        Alert.alert('Error', 'User data not found. Please log in again.');
-        router.replace('/auth/login');
-        return;
-      }
-
-      const userData = JSON.parse(userDataString);
-      setUser(userData);
-
       // Fetch user's updates
-      const response = await fetch(`${API_BASE_URL}/updates/user/${userData.id}`);
+      const response = await fetch(`${API_BASE_URL}/updates/user/${user.id}`);
       if (response.ok) {
         const updates = await response.json();
         setUserUpdates(updates);
@@ -89,26 +82,11 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('userToken');
-              await AsyncStorage.removeItem('userData');
-              router.replace('/auth/login');
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
-        },
-      ]
-    );
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -164,19 +142,37 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View style={{ backgroundColor: 'white', padding: 24, marginBottom: 16 }}>
           <View style={{ alignItems: 'center', marginBottom: 24 }}>
-            <View style={{
-              width: 80,
-              height: 80,
-              borderRadius: 40,
-              backgroundColor: '#3b82f6',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: 16,
-            }}>
-              <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white' }}>
-                {getInitials(user.first_name, user.last_name)}
-              </Text>
-            </View>
+            {user.profile_pic_url ? (
+              <View style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                marginBottom: 16,
+                overflow: 'hidden',
+              }}>
+                <Image
+                  source={{ uri: user.profile_pic_url }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                  }}
+                />
+              </View>
+            ) : (
+              <View style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: '#3b82f6',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: 16,
+              }}>
+                <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white' }}>
+                  {getInitials(user.first_name, user.last_name)}
+                </Text>
+              </View>
+            )}
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', marginBottom: 4 }}>
               {user.first_name} {user.last_name}
             </Text>
@@ -260,11 +256,11 @@ export default function ProfileScreen() {
                     {update.location_name}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#9ca3af', marginLeft: 'auto' }}>
-                    {formatDate(update.date)}
+                    {formatDate(update.created_at)}
                   </Text>
                 </View>
                 <Text style={{ fontSize: 14, color: '#374151', marginBottom: 8, lineHeight: 20 }}>
-                  {update.message}
+                  {update.comment}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
@@ -298,7 +294,7 @@ export default function ProfileScreen() {
               borderBottomWidth: 1,
               borderBottomColor: '#f3f4f6',
             }}
-            onPress={() => Alert.alert('Coming Soon', 'Edit profile feature will be available soon!')}
+            onPress={() => router.push('/app/edit-profile')}
           >
             <Ionicons name="person-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
             <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Edit Profile</Text>

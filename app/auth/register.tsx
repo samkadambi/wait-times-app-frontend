@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../hooks/useAuth';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -24,6 +24,7 @@ export default function RegisterScreen() {
   const [interests, setInterests] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [cities, setCities] = useState([]);
+  const { login } = useAuth();
 
   const fetchCities = async () => {
     const response = await fetch(`${API_BASE_URL}/cities`);
@@ -61,8 +62,7 @@ export default function RegisterScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        await AsyncStorage.setItem('userToken', data.token);
-        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        await login(data.token, data.user);
         router.replace('/app/home');
       } else {
         Alert.alert('Error', data.message || 'Registration failed');

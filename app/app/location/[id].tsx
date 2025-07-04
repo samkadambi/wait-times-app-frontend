@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../../hooks/useAuth';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -55,31 +55,16 @@ export default function LocationDetailScreen() {
   const [comments, setComments] = useState<{ [updateId: number]: Comment[] }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
   const [expandedUpdate, setExpandedUpdate] = useState<number | null>(null);
   const [newComment, setNewComment] = useState<string>('');
   const [commentingOn, setCommentingOn] = useState<number | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadUserData();
     if (id) {
       fetchLocationData();
     }
   }, [id]);
-
-  const loadUserData = async () => {
-    try {
-      const userDataString = await AsyncStorage.getItem('userData');
-      if (userDataString) {
-        const user = JSON.parse(userDataString);
-        setUserData(user);
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
-
-  
 
   const fetchLocationData = async () => {
     try {
@@ -88,38 +73,35 @@ export default function LocationDetailScreen() {
         fetch(`${API_BASE_URL}/updates/location/${id}`),
       ]);
 
-      if (locationRes.ok) {
+      if (locationRes.ok && updatesRes.ok) {
         const locationData = await locationRes.json();
-        setLocation(locationData);
-      } else {
-        Alert.alert('Error', 'Location not found');
-        router.back();
-        return;
-      }
-
-      if (updatesRes.ok) {
         const updatesData = await updatesRes.json();
-        setUpdates(updatesData);
         
+        setLocation(locationData);
+        setUpdates(updatesData);
+
         // Fetch comments for each update
-        const commentsData: { [updateId: number]: Comment[] } = {};
-        for (const update of updatesData) {
-          try {
-            const commentsRes = await fetch(`${API_BASE_URL}/comments/update/${update.id}`);
-            if (commentsRes.ok) {
-              const updateComments = await commentsRes.json();
-              commentsData[update.id] = updateComments;
-            }
-          } catch (error) {
-            console.error(`Error fetching comments for update ${update.id}:`, error);
-            commentsData[update.id] = [];
-          }
-        }
-        setComments(commentsData);
+        const commentsPromises = updatesData.map((update: Update) =>
+          fetch(`${API_BASE_URL}/comments/update/${update.id}`)
+        );
+        
+        const commentsResponses = await Promise.all(commentsPromises);
+        const commentsData = await Promise.all(
+          commentsResponses.map(res => res.json())
+        );
+
+        const commentsMap: { [updateId: number]: Comment[] } = {};
+        updatesData.forEach((update: Update, index: number) => {
+          commentsMap[update.id] = commentsData[index];
+        });
+        
+        setComments(commentsMap);
+      } else {
+        Alert.alert('Error', 'Failed to load location data');
       }
     } catch (error) {
       console.error('Error fetching location data:', error);
-      Alert.alert('Error', 'Failed to load location data');
+      Alert.alert('Error', 'Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -203,7 +185,7 @@ export default function LocationDetailScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: userData?.id || 1,
+          user_id: user?.id || 1,
           vote: vote,
         }),
       });
@@ -218,7 +200,7 @@ export default function LocationDetailScreen() {
   };
 
   const handlePostComment = async (updateId: number) => {
-    if (!newComment.trim() || !userData) {
+    if (!newComment.trim() || !user) {
       Alert.alert('Error', 'Please enter a comment and make sure you are logged in');
       return;
     }
@@ -230,7 +212,7 @@ export default function LocationDetailScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: userData.id,
+          user_id: user.id,
           update_id: updateId,
           comment: newComment.trim(),
         }),
@@ -257,8 +239,10 @@ export default function LocationDetailScreen() {
     }
   };
 
+  console.log(updates);
+
   const handleDeleteComment = async (commentId: number, updateId: number) => {
-    if (!userData) return;
+    if (!user) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
@@ -267,7 +251,7 @@ export default function LocationDetailScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: userData.id,
+          user_id: user.id,
         }),
       });
 
@@ -555,7 +539,7 @@ export default function LocationDetailScreen() {
                                 {comment.comment}
                               </Text>
                             </View>
-                            {userData && comment.user_id === userData.id && (
+                            {user && comment.user_id === user.id && (
                               <TouchableOpacity
                                 onPress={() => handleDeleteComment(comment.id, update.id)}
                                 style={{ padding: 4, marginLeft: 8 }}

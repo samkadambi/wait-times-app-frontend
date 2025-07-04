@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../hooks/useAuth';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -25,15 +26,6 @@ interface Location {
   img_url: string;
 }
 
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  location: string;
-  profile_pic_url: string;
-}
-
 export default function PostUpdateScreen() {
   const { locationId, locationName } = useLocalSearchParams<{ locationId?: string; locationName?: string }>();
   const [locations, setLocations] = useState<Location[]>([]);
@@ -42,23 +34,13 @@ export default function PostUpdateScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [userData, setUserData] = useState<User | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [analyzedBusyness, setAnalyzedBusyness] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchLocations();
-    loadUserData();
   }, []);
-
-  const loadUserData = async () => {
-    try {
-      const userDataString = await AsyncStorage.getItem('userData');
-      if (userDataString) {
-        setUserData(JSON.parse(userDataString));
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
 
   const fetchLocations = async () => {
     try {
@@ -119,13 +101,41 @@ export default function PostUpdateScreen() {
     }
   };
 
+  const analyzeImage = async (imageUrl: string): Promise<string | null> => {
+    setIsAnalyzingImage(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/analysis/image-busyness`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: imageUrl,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.busyness_level;
+      } else {
+        throw new Error('Failed to analyze image');
+      }
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      Alert.alert('Error', 'Failed to analyze image. Please try again.');
+      return null;
+    } finally {
+      setIsAnalyzingImage(false);
+    }
+  };
+
   const handlePostUpdate = async () => {
     if (!selectedLocation || !comment.trim()) {
       Alert.alert('Error', 'Please select a location and add a comment');
       return;
     }
 
-    if (!userData) {
+    if (!user) {
       Alert.alert('Error', 'User data not found. Please log in again.');
       return;
     }
@@ -133,6 +143,7 @@ export default function PostUpdateScreen() {
     setIsLoading(true);
     try {
       let uploadedImageUrl = null;
+      let busynessLevel = null;
       
       // Upload image if one is selected
       if (image) {
@@ -141,19 +152,26 @@ export default function PostUpdateScreen() {
           setIsLoading(false);
           return; // Stop if image upload failed
         }
+
+        // Analyze image for busyness if upload was successful
+        busynessLevel = await analyzeImage(uploadedImageUrl);
+        if (busynessLevel) {
+          setAnalyzedBusyness(busynessLevel);
+        }
       }
 
-      // Post the update with the uploaded image URL
+      // Post the update with the uploaded image URL and analyzed busyness
       const response = await fetch(`${API_BASE_URL}/updates`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: userData.id,
+          user_id: user.id,
           location_id: selectedLocation,
           message: comment.trim(),
           img_url: uploadedImageUrl,
+          busyness_level: busynessLevel, // Include analyzed busyness level
         }),
       });
 
@@ -271,6 +289,50 @@ export default function PostUpdateScreen() {
                     marginBottom: 8
                   }} 
                 />
+                
+                {/* AI Analysis Result */}
+                {analyzedBusyness && (
+                  <View style={{ 
+                    backgroundColor: '#f0f9ff', 
+                    borderWidth: 1, 
+                    borderColor: '#0ea5e9', 
+                    borderRadius: 8, 
+                    padding: 12, 
+                    marginBottom: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center'
+                  }}>
+                    <Ionicons name="sparkles" size={20} color="#0ea5e9" style={{ marginRight: 8 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#0c4a6e' }}>
+                        AI Analysis Complete
+                      </Text>
+                      <Text style={{ fontSize: 12, color: '#0369a1' }}>
+                        Detected: {analyzedBusyness.replace('_', ' ').toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Analysis Loading */}
+                {isAnalyzingImage && (
+                  <View style={{ 
+                    backgroundColor: '#fef3c7', 
+                    borderWidth: 1, 
+                    borderColor: '#f59e0b', 
+                    borderRadius: 8, 
+                    padding: 12, 
+                    marginBottom: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center'
+                  }}>
+                    <ActivityIndicator size="small" color="#f59e0b" style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 14, color: '#92400e' }}>
+                      AI analyzing image for busyness...
+                    </Text>
+                  </View>
+                )}
+
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <TouchableOpacity
                     style={{
@@ -292,7 +354,10 @@ export default function PostUpdateScreen() {
                       borderRadius: 8,
                       alignItems: 'center',
                     }}
-                    onPress={() => setImage(null)}
+                    onPress={() => {
+                      setImage(null);
+                      setAnalyzedBusyness(null);
+                    }}
                   >
                     <Text style={{ color: 'white', fontWeight: '500' }}>Remove</Text>
                   </TouchableOpacity>
@@ -315,7 +380,7 @@ export default function PostUpdateScreen() {
                   <Text style={{ fontSize: 48, color: '#9ca3af' }}>📷</Text>
                   <Text style={{ color: '#6b7280', marginTop: 8 }}>Tap to add a photo</Text>
                   <Text style={{ color: '#9ca3af', fontSize: 12, marginTop: 4 }}>
-                    Max 5MB • JPG, PNG
+                    Max 5MB • JPG, PNG • AI Analysis
                   </Text>
                 </View>
               </TouchableOpacity>
