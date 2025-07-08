@@ -160,6 +160,8 @@ export default function PostUpdateScreen() {
         }
       }
 
+      console.log('busynessLevel', busynessLevel)
+
       // Post the update with the uploaded image URL and analyzed busyness
       const response = await fetch(`${API_BASE_URL}/updates`, {
         method: 'POST',
@@ -189,6 +191,9 @@ export default function PostUpdateScreen() {
             }
           ]
         );
+        setTimeout(() => {
+          router.push('/app/home')
+        }, 1000)
       } else {
         Alert.alert('Error', data.message || 'Failed to post update');
       }

@@ -15,15 +15,21 @@ import { useAuth } from '../../hooks/useAuth';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
+interface Interest {
+  id: number;
+  type: string;
+}
+
 export default function RegisterScreen() {
   const [first_name, setFirstName] = useState('');
   const [last_name, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [location, setLocation] = useState('');
-  const [interests, setInterests] = useState('');
+  const [userInterests, setUserInterests] = useState<Interest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [cities, setCities] = useState([]);
+  const [interests, setInterests] = useState<Interest[]>([]);
   const { login } = useAuth();
 
   const fetchCities = async () => {
@@ -32,8 +38,15 @@ export default function RegisterScreen() {
     setCities(data);
   }
 
+  const fetchInterests = async () => {
+    const response = await fetch(`${API_BASE_URL}/interests`);
+    const data = await response.json();
+    setInterests(data);
+  }
+
   useEffect(() => {
     fetchCities();
+    fetchInterests();
   }, []);
 
   const handleRegister = async () => {
@@ -55,7 +68,7 @@ export default function RegisterScreen() {
           email: email.trim(),
           password: password.trim(),
           location: location.trim(),
-          interests: interests.trim(),
+          interests: userInterests.map(interest => interest.id) || null,
         }),
       });
 
@@ -79,6 +92,8 @@ export default function RegisterScreen() {
     router.back();
   };
 
+  console.log(interests)
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -87,6 +102,12 @@ export default function RegisterScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24 }}>
           {/* Header */}
+          <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 16, alignSelf: 'flex-start' }}>
+            <Text style={{ color: '#2563eb', textAlign: 'left', fontWeight: '500' }}>
+              Back
+            </Text>
+          </TouchableOpacity>
+
           <View style={{ alignItems: 'center', marginBottom: 32 }}>
             <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#2563eb', marginBottom: 8 }}>
               Create Account
@@ -195,22 +216,30 @@ export default function RegisterScreen() {
             </View>
 
             <View>
-              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Interests</Text>
-              <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: '#d1d5db',
-                  borderRadius: 8,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  fontSize: 16,
-                }}
-                placeholder="e.g., basketball, restaurants, bars"
-                value={interests}
-                onChangeText={setInterests}
-                multiline
-                numberOfLines={2}
-              />
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Interests (optional)</Text>
+              {/* TODO: Add interests checkbox */}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {interests.map((interest) => (
+                  <TouchableOpacity 
+                    key={interest.id} 
+                    style={{ 
+                      padding: 8, 
+                      borderRadius: 8, 
+                      backgroundColor: userInterests.some(item => item.id === interest.id) ? '#2563eb' : '#d1d5db' 
+                    }} 
+                    onPress={() => {
+                        if (userInterests.some(item => item.id === interest.id)) {
+                        setUserInterests(userInterests.filter(item => item.id !== interest.id));
+                      } else {
+                        setUserInterests([...userInterests, interest]);
+                      }
+                    }}
+                  >
+                    <Text style={{ color: 'white', fontWeight: '500' }}>{interest.type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
             </View>
 
             <TouchableOpacity

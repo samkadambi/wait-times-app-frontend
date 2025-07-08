@@ -25,18 +25,25 @@ interface User {
     last_name: string;
     email: string;
     location: string;
-    interests: string;
+    interests: Interest[];
     profile_pic_url: string;
     token?: string;
 }
 
+interface Interest {
+  id: number;
+  type: string;
+}
+
+
 export default function EditProfileScreen() {
-  const { user, logout, token, updateUser } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [cities, setCities] = useState<string[]>([]);
+  const [userInterests, setUserInterests] = useState<Interest[]>([]);
   
   // Check if there are unsaved changes
   const hasUnsavedChanges = () => {
@@ -46,7 +53,7 @@ export default function EditProfileScreen() {
       lastName !== user.last_name ||
       email !== user.email ||
       location !== (user.location || '') ||
-      interests !== (user.interests || '') ||
+      userInterests !== (user.interests || []) ||
       editedUserImage !== (user.profile_pic_url || null)
     );
   };
@@ -56,13 +63,21 @@ export default function EditProfileScreen() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [location, setLocation] = useState('');
-  const [interests, setInterests] = useState('');
+  const [interests, setInterests] = useState<Interest[]>([]);
   const [editedUserImage, setEditedUserImage] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadInterests = async () => {
+      const response = await fetch(`${API_BASE_URL}/interests`);
+      if (response.ok) {
+        const interests = await response.json();
+        setInterests(interests);
+      }
+    };
     if (user) {
       loadUserData();
       fetchCities();
+      loadInterests();
     }
   }, [user]);
 
@@ -73,11 +88,22 @@ export default function EditProfileScreen() {
       return;
     }
 
+    const interestsResponse = await fetch(`${API_BASE_URL}/users/${user.id}/interests`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (interestsResponse.ok) {
+      const interests = await interestsResponse.json();
+      console.log('interests', interests);
+      setUserInterests(interests);
+    }
+
     setFirstName(user.first_name || '');
     setLastName(user.last_name || '');
     setEmail(user.email || '');
     setLocation(user.location || '');
-    setInterests(user.interests || '');
     setEditedUserImage(user.profile_pic_url || null);
     setIsLoading(false);
   };
@@ -119,6 +145,7 @@ export default function EditProfileScreen() {
           email: email.trim(),
           location: location.trim(),
           profile_pic_url: editedUserImage,
+          interests: userInterests,
         }),
       });
 
@@ -165,27 +192,6 @@ export default function EditProfileScreen() {
 
   const handleCancel = () => {
     router.back();
-  };
-
-  const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
-        },
-      ]
-    );
   };
 
   if (isLoading) {
@@ -294,9 +300,6 @@ export default function EditProfileScreen() {
               )}
             </Text>
           </View>
-          <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }}>
-            <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -449,25 +452,28 @@ export default function EditProfileScreen() {
 
             {/* Interests */}
             <View style={{ marginBottom: 20 }}>
-              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Interests</Text>
-              <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: '#d1d5db',
-                  borderRadius: 8,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  fontSize: 16,
-                  backgroundColor: 'white',
-                  minHeight: 80,
-                }}
-                placeholder="e.g., basketball, restaurants, bars"
-                value={interests}
-                onChangeText={setInterests}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8}}>Interests</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {interests.map((interest) => (
+                  <TouchableOpacity 
+                    key={interest.id} 
+                    style={{ 
+                      padding: 8, 
+                      borderRadius: 8, 
+                      backgroundColor: userInterests.some(item => item.id === interest.id) ? '#2563eb' : '#d1d5db' 
+                    }} 
+                    onPress={() => {
+                        if (userInterests.some(item => item.id === interest.id)) {
+                        setUserInterests(userInterests.filter(item => item.id !== interest.id));
+                      } else {
+                        setUserInterests([...userInterests, interest]);
+                      }
+                    }}
+                  >
+                    <Text style={{ color: 'white', fontWeight: '500' }}>{interest.type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
         </View>

@@ -374,6 +374,19 @@ export default function HomeScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
               onPress={() => {
+                try {
+                  router.push('/app/search' as any);
+                } catch (error) {
+                  console.error('Navigation error:', error);
+                  Alert.alert('Error', 'Could not navigate to search');
+                }
+              }}
+              style={{ padding: 8, marginRight: 8 }}
+            >
+              <Ionicons name="people-outline" size={24} color="#3b82f6" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
                 console.log('Profile button pressed');
                 try {
                   router.push('/app/profile');

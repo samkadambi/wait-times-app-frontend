@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -21,7 +21,7 @@ interface UserUpdate {
   wait_time: number;
   busyness_level: string;
   comment: string;
-  created_at: string;
+  date: string;
   upvotes: number;
   downvotes: number;
   location_name: string;
@@ -31,20 +31,39 @@ export default function ProfileScreen() {
   console.log('ProfileScreen component rendered');
   const [userUpdates, setUserUpdates] = useState<UserUpdate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [interests, setInterests] = useState<string[]>([]);
   const [stats, setStats] = useState({
     totalUpdates: 0,
     totalUpvotes: 0,
     totalDownvotes: 0,
     averageRating: 0,
   });
-  const { user, logout } = useAuth();
+  const [profileUser, setProfileUser] = useState<any>(null);
+  const { user, logout, token } = useAuth();
+  
+  // Get user ID from route params if viewing another user's profile
+  const route = useLocalSearchParams();
+  const targetUserId = route.userId ? parseInt(route.userId as string) : null;
+  const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
   useEffect(() => {
     console.log('ProfileScreen useEffect triggered');
     if (user) {
       loadUserProfile();
     }
-  }, [user]);
+
+    //get interests from interests table
+    const loadInterests = async () => {
+      const response = await fetch(`${API_BASE_URL}/interests`);
+      if (response.ok) {
+        const interests = await response.json();
+        setInterests(interests);
+      }
+    };
+    
+    loadInterests();
+
+  }, [user, targetUserId]);
 
   const loadUserProfile = async () => {
     if (!user) {
@@ -53,9 +72,37 @@ export default function ProfileScreen() {
       return;
     }
 
+    const userIdToLoad = targetUserId || user.id;
+
     try {
+      // Load profile user data
+      if (!isOwnProfile) {
+        if (!token) {
+          Alert.alert('Error', 'Authentication token not found. Please log in again.');
+          router.replace('/auth/login');
+          return;
+        }
+        
+        const userResponse = await fetch(`${API_BASE_URL}/users/${userIdToLoad}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setProfileUser(userData);
+        } else {
+          Alert.alert('Error', 'User not found');
+          router.back();
+          return;
+        }
+      } else {
+        setProfileUser(user);
+      }
+
       // Fetch user's updates
-      const response = await fetch(`${API_BASE_URL}/updates/user/${user.id}`);
+      const response = await fetch(`${API_BASE_URL}/updates/user/${userIdToLoad}`);
       if (response.ok) {
         const updates = await response.json();
         setUserUpdates(updates);
@@ -111,7 +158,7 @@ export default function ProfileScreen() {
     );
   }
 
-  if (!user) {
+  if (!user || !profileUser) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafb' }}>
         <Text style={{ color: '#6b7280', fontSize: 18 }}>User not found</Text>
@@ -119,30 +166,34 @@ export default function ProfileScreen() {
     );
   }
 
-  console.log(user);
+  console.log(userUpdates)
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       {/* Header */}
       <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => router.push('/app/home')} style={{ marginRight: 16 }}>
-              <Ionicons name="arrow-back" size={24} color="#6b7280" />
-            </TouchableOpacity>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>Profile</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
+                <Ionicons name="arrow-back" size={24} color="#6b7280" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>
+                {isOwnProfile ? 'Profile' : `${profileUser.first_name}'s Profile`}
+              </Text>
+            </View>
+            {isOwnProfile && (
+              <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }} onLongPress={() => Alert.alert('Logout', 'Are you sure you want to logout?')}>
+                <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+              </TouchableOpacity>
+            )}
           </View>
-          <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }}>
-            <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
       </View>
 
       <ScrollView style={{ flex: 1 }}>
         {/* Profile Header */}
         <View style={{ backgroundColor: 'white', padding: 24, marginBottom: 16 }}>
           <View style={{ alignItems: 'center', marginBottom: 24 }}>
-            {user.profile_pic_url ? (
+            {profileUser.profile_pic_url ? (
               <View style={{
                 width: 80,
                 height: 80,
@@ -151,7 +202,7 @@ export default function ProfileScreen() {
                 overflow: 'hidden',
               }}>
                 <Image
-                  source={{ uri: user.profile_pic_url }}
+                  source={{ uri: profileUser.profile_pic_url }}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -169,18 +220,18 @@ export default function ProfileScreen() {
                 marginBottom: 16,
               }}>
                 <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white' }}>
-                  {getInitials(user.first_name, user.last_name)}
+                  {getInitials(profileUser.first_name, profileUser.last_name)}
                 </Text>
               </View>
             )}
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', marginBottom: 4 }}>
-              {user.first_name} {user.last_name}
+              {profileUser.first_name} {profileUser.last_name}
             </Text>
             <Text style={{ fontSize: 16, color: '#6b7280', marginBottom: 8 }}>
-              {user.email}
+              {profileUser.email}
             </Text>
             <Text style={{ fontSize: 14, color: '#9ca3af' }}>
-              Member since {formatDate(user.created_at)}
+              Member since {formatDate(profileUser.created_at)}
             </Text>
           </View>
 
@@ -200,12 +251,84 @@ export default function ProfileScreen() {
             </View>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 16, backgroundColor: '#f8fafc', borderRadius: 8, marginLeft: 8 }}>
               <Text style={{ fontSize: 24, fontWeight: 'bold', color: stats.averageRating >= 0 ? '#10b981' : '#ef4444' }}>
-                {stats.averageRating}
+                {stats.averageRating.toFixed(1)}
               </Text>
               <Text style={{ fontSize: 12, color: '#6b7280' }}>Avg Rating</Text>
             </View>
           </View>
         </View>
+
+        {/* Settings Section - Only show for own profile */}
+        {isOwnProfile && (
+          <View style={{ backgroundColor: 'white', marginBottom: 16 }}>
+            <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: '#1f2937' }}>
+                Settings
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 24,
+                paddingVertical: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: '#f3f4f6',
+              }}
+              onPress={() => router.push('/app/edit-profile')}
+            >
+              <Ionicons name="person-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Edit Profile</Text>
+              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 24,
+                paddingVertical: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: '#f3f4f6',
+              }}
+              onPress={() => Alert.alert('Coming Soon', 'Notification settings will be available soon!')}
+            >
+              <Ionicons name="notifications-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Notifications</Text>
+              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 24,
+                paddingVertical: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: '#f3f4f6',
+              }}
+              onPress={() => router.push('/app/friend-requests' as any)}
+            >
+              <Ionicons name="people-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Friend Requests</Text>
+              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 24,
+                paddingVertical: 16,
+              }}
+              onPress={() => Alert.alert('Coming Soon', 'Privacy settings will be available soon!')}
+            >
+              <Ionicons name="shield-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
+              <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Privacy</Text>
+              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Recent Activity */}
         <View style={{ backgroundColor: 'white', marginBottom: 16 }}>
@@ -219,25 +342,27 @@ export default function ProfileScreen() {
             <View style={{ padding: 40, alignItems: 'center' }}>
               <Ionicons name="chatbubble-outline" size={48} color="#9ca3af" />
               <Text style={{ color: '#6b7280', fontSize: 16, marginTop: 12, textAlign: 'center' }}>
-                No updates yet
+                {isOwnProfile ? 'No updates yet' : 'No updates yet'}
               </Text>
               <Text style={{ color: '#9ca3af', textAlign: 'center', marginTop: 4 }}>
-                Start sharing updates to see them here
+                {isOwnProfile ? 'Start sharing updates to see them here' : 'This user hasn\'t shared any updates yet'}
               </Text>
-              <TouchableOpacity
-                onPress={() => router.push('/app/post-update')}
-                style={{
-                  marginTop: 16,
-                  backgroundColor: '#2563eb',
-                  paddingHorizontal: 20,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: 'white', fontWeight: '600' }}>
-                  Post First Update
-                </Text>
-              </TouchableOpacity>
+              {isOwnProfile && (
+                <TouchableOpacity
+                  onPress={() => router.push('/app/post-update')}
+                  style={{
+                    marginTop: 16,
+                    backgroundColor: '#2563eb',
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text style={{ color: 'white', fontWeight: '600' }}>
+                    Post First Update
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             userUpdates.map((update) => (
@@ -256,7 +381,7 @@ export default function ProfileScreen() {
                     {update.location_name}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#9ca3af', marginLeft: 'auto' }}>
-                    {formatDate(update.created_at)}
+                    {formatDate(update.date.split('T')[0])}
                   </Text>
                 </View>
                 <Text style={{ fontSize: 14, color: '#374151', marginBottom: 8, lineHeight: 20 }}>
@@ -275,61 +400,6 @@ export default function ProfileScreen() {
               </View>
             ))
           )}
-        </View>
-
-        {/* Settings Section */}
-        <View style={{ backgroundColor: 'white', marginBottom: 16 }}>
-          <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#1f2937' }}>
-              Settings
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderBottomWidth: 1,
-              borderBottomColor: '#f3f4f6',
-            }}
-            onPress={() => router.push('/app/edit-profile')}
-          >
-            <Ionicons name="person-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
-            <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Edit Profile</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              borderBottomWidth: 1,
-              borderBottomColor: '#f3f4f6',
-            }}
-            onPress={() => Alert.alert('Coming Soon', 'Notification settings will be available soon!')}
-          >
-            <Ionicons name="notifications-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
-            <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Notifications</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-            }}
-            onPress={() => Alert.alert('Coming Soon', 'Privacy settings will be available soon!')}
-          >
-            <Ionicons name="shield-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
-            <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Privacy</Text>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-          </TouchableOpacity>
         </View>
 
         {/* App Info */}

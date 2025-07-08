@@ -291,6 +291,10 @@ export default function LocationDetailScreen() {
     );
   }
 
+  console.log(updates)
+
+  console.log(location)
+
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       {/* Header */}
@@ -338,7 +342,7 @@ export default function LocationDetailScreen() {
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ fontSize: 14, color: '#6b7280' }}>
-              {location.update_count} updates
+              {location.update_count} update{location.update_count === 1 ? '' : 's'}
             </Text>
             {location.last_updated && (
               <Text style={{ fontSize: 14, color: '#6b7280' }}>
