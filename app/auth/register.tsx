@@ -113,7 +113,7 @@ export default function RegisterScreen() {
               Create Account
             </Text>
             <Text style={{ color: '#6b7280', textAlign: 'center' }}>
-              Join WaitNSee to help others and stay informed
+              Join GoodEye to help others and stay informed
             </Text>
           </View>
 

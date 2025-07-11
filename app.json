@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "client-waitnsee",
-    "slug": "client-waitnsee",
+    "name": "client-GoodEye",
+    "slug": "client-GoodEye",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "client-waitnsee",
+    "scheme": "client-GoodEye",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

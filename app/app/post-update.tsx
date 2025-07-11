@@ -21,9 +21,16 @@ interface Location {
   id: number;
   name: string;
   address: string;
-  city: string;
+  city_id: number;
   type: string;
   img_url: string;
+}
+
+interface City {
+  id: number;
+  name: string;
+  state: string;
+  country: string;
 }
 
 export default function PostUpdateScreen() {
@@ -31,6 +38,8 @@ export default function PostUpdateScreen() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocation, setSelectedLocation] = useState(locationId || '');
   const [comment, setComment] = useState('');
+  const [cities, setCities] = useState<City[]>([]);
+  const [selectedCity, setSelectedCity] = useState<City>({ id: 0, name: '', state: '', country: '' });
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -47,6 +56,12 @@ export default function PostUpdateScreen() {
       const response = await fetch(`${API_BASE_URL}/locations`);
       const data = await response.json();
       setLocations(data);
+
+      //get cities from cities table
+      const citiesResponse = await fetch(`${API_BASE_URL}/cities`);
+      const citiesData = await citiesResponse.json();
+      setCities(citiesData);
+      setSelectedCity(citiesData.find((city: City) => city.name == user?.location) || { id: 0, name: '', state: '', country: '' });
     } catch (error) {
       console.error('Error fetching locations:', error);
       Alert.alert('Error', 'Failed to load locations');
@@ -54,7 +69,6 @@ export default function PostUpdateScreen() {
   };
 
   const pickImage = async () => {
-    console.log('Picking image');
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: 'images',
       allowsEditing: true,
@@ -62,12 +76,16 @@ export default function PostUpdateScreen() {
       quality: 1,
     });
 
-    console.log('Result:', result);
-
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   };
+
+  console.log('selectedCity', selectedCity);
+
+  console.log('locations', locations);
+
+  console.log('user', user);
 
   const uploadImage = async (imageUri: string): Promise<string | null> => {
     setIsUploadingImage(true);
@@ -160,8 +178,6 @@ export default function PostUpdateScreen() {
         }
       }
 
-      console.log('busynessLevel', busynessLevel)
-
       // Post the update with the uploaded image URL and analyzed busyness
       const response = await fetch(`${API_BASE_URL}/updates`, {
         method: 'POST',
@@ -224,6 +240,35 @@ export default function PostUpdateScreen() {
 
         {/* Form */}
         <View style={{ gap: 20 }}>
+          {/* City Selection */}
+          <View>
+            <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
+              Select City *
+            </Text>
+            <View style={{
+              borderWidth: 1,
+              borderColor: '#d1d5db',
+              borderRadius: 8,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
+              backgroundColor: 'white',
+            }}>
+              <Picker
+                selectedValue={selectedCity.name}
+                onValueChange={(itemValue) => setSelectedCity(cities.find((city) => city.name === itemValue) || { id: 0, name: '', state: '', country: '' })}
+                style={{ fontSize: 16 }}
+              >
+                <Picker.Item label="Choose a city" value="" />
+                {cities.map((city) => (
+                  <Picker.Item 
+                    key={city.id} 
+                    label={`${city.name}`} 
+                    value={city.name} 
+                  />
+                ))}
+              </Picker>
+            </View>
+          </View>
           {/* Location Selection */}
           <View>
             <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
@@ -243,7 +288,7 @@ export default function PostUpdateScreen() {
                 style={{ fontSize: 16 }}
               >
                 <Picker.Item label="Choose a location" value="" />
-                {locations.map((location) => (
+                {locations.filter((location) => location.city_id === selectedCity.id).map((location) => (
                   <Picker.Item 
                     key={location.id} 
                     label={`${location.name}`} 

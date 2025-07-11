@@ -66,7 +66,7 @@ export default function LoginScreen() {
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 48 }}>
             <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#2563eb', marginBottom: 8 }}>
-              WaitNSee
+              GoodEye
             </Text>
             <Text style={{ fontSize: 18, color: '#6b7280', textAlign: 'center' }}>
               Know the wait times before you go

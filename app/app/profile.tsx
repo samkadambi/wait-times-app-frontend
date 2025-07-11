@@ -28,7 +28,6 @@ interface UserUpdate {
 }
 
 export default function ProfileScreen() {
-  console.log('ProfileScreen component rendered');
   const [userUpdates, setUserUpdates] = useState<UserUpdate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [interests, setInterests] = useState<string[]>([]);
@@ -39,6 +38,7 @@ export default function ProfileScreen() {
     averageRating: 0,
   });
   const [profileUser, setProfileUser] = useState<any>(null);
+  const [friends, setFriends] = useState<any[]>([]);
   const { user, logout, token } = useAuth();
   
   // Get user ID from route params if viewing another user's profile
@@ -47,7 +47,6 @@ export default function ProfileScreen() {
   const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
   useEffect(() => {
-    console.log('ProfileScreen useEffect triggered');
     if (user) {
       loadUserProfile();
     }
@@ -60,8 +59,23 @@ export default function ProfileScreen() {
         setInterests(interests);
       }
     };
-    
+
+    //get friends from friends table
+    const loadFriends = async () => {
+      const response = await fetch(`${API_BASE_URL}/friends/list`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const friends = await response.json();
+        setFriends(friends);
+      }
+    };
+
     loadInterests();
+    loadFriends();
 
   }, [user, targetUserId]);
 
@@ -137,7 +151,6 @@ export default function ProfileScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    console.log('Formatting date:', dateString);
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -165,8 +178,6 @@ export default function ProfileScreen() {
       </View>
     );
   }
-
-  console.log(userUpdates)
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
@@ -237,17 +248,20 @@ export default function ProfileScreen() {
 
           {/* Stats Grid */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <TouchableOpacity 
+              style={{ flex: 1, alignItems: 'center', paddingVertical: 16, backgroundColor: '#f8fafc', borderRadius: 8, marginRight: 8 }}
+              onPress={() => router.push('/app/friends-list' as any)}
+            >
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#3b82f6' }}>
+                {friends.length}
+              </Text>
+              <Text style={{ fontSize: 12, color: '#6b7280' }}>Friends</Text>
+            </TouchableOpacity>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 16, backgroundColor: '#f8fafc', borderRadius: 8, marginRight: 8 }}>
               <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#3b82f6' }}>
                 {stats.totalUpdates}
               </Text>
               <Text style={{ fontSize: 12, color: '#6b7280' }}>Updates</Text>
-            </View>
-            <View style={{ flex: 1, alignItems: 'center', paddingVertical: 16, backgroundColor: '#f8fafc', borderRadius: 8, marginHorizontal: 4 }}>
-              <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#10b981' }}>
-                {stats.totalUpvotes}
-              </Text>
-              <Text style={{ fontSize: 12, color: '#6b7280' }}>Upvotes</Text>
             </View>
             <View style={{ flex: 1, alignItems: 'center', paddingVertical: 16, backgroundColor: '#f8fafc', borderRadius: 8, marginLeft: 8 }}>
               <Text style={{ fontSize: 24, fontWeight: 'bold', color: stats.averageRating >= 0 ? '#10b981' : '#ef4444' }}>
@@ -406,7 +420,7 @@ export default function ProfileScreen() {
         <View style={{ backgroundColor: 'white', marginBottom: 24 }}>
           <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
             <Text style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center' }}>
-              WaitNSee v1.0.0
+              GoodEye v1.0.0
             </Text>
             <Text style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 4 }}>
               Know before you go

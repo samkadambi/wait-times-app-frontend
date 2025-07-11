@@ -58,19 +58,22 @@ export default function LocationDetailScreen() {
   const [expandedUpdate, setExpandedUpdate] = useState<number | null>(null);
   const [newComment, setNewComment] = useState<string>('');
   const [commentingOn, setCommentingOn] = useState<number | null>(null);
+  const [filterLastDay, setFilterLastDay] = useState(true); // Default to last day filter
   const { user } = useAuth();
 
   useEffect(() => {
     if (id) {
       fetchLocationData();
     }
-  }, [id]);
+  }, [id, filterLastDay]);
+
 
   const fetchLocationData = async () => {
     try {
+      const filterParam = filterLastDay ? 'lastDay' : 'all';
       const [locationRes, updatesRes] = await Promise.all([
         fetch(`${API_BASE_URL}/locations/${id}`),
-        fetch(`${API_BASE_URL}/updates/location/${id}`),
+        fetch(`${API_BASE_URL}/updates/location/${id}?filter=${filterParam}`),
       ]);
 
       if (locationRes.ok && updatesRes.ok) {
@@ -143,7 +146,48 @@ export default function LocationDetailScreen() {
     }
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: string, locationName?: string) => {
+    // Check for specific sports courts in the location name
+    if (locationName) {
+      const name = locationName.toLowerCase();
+      
+      // Basketball courts
+      if (name.includes('basketball')) {
+        return 'basketball-outline';
+      }
+      
+      // Tennis courts
+      if (name.includes('tennis')) {
+        return 'tennisball-outline';
+      }
+      
+      // Volleyball courts
+      if (name.includes('volleyball')) {
+        return 'football-outline'; // Ionicons doesn't have volleyball, using football as closest
+      }
+      
+      // Soccer fields
+      if (name.includes('soccer') || name.includes('football field')) {
+        return 'football-outline';
+      }
+      
+      // Baseball fields
+      if (name.includes('baseball') || name.includes('diamond')) {
+        return 'baseball-outline';
+      }
+      
+      // Swimming pools
+      if (name.includes('pool') || name.includes('swimming')) {
+        return 'water-outline';
+      }
+      
+      // Gym/fitness
+      if (name.includes('gym') || name.includes('fitness') || name.includes('workout')) {
+        return 'fitness-outline';
+      }
+    }
+    
+    // Fall back to type-based icons
     switch (type) {
       case 'park':
         return 'leaf-outline';
@@ -239,8 +283,6 @@ export default function LocationDetailScreen() {
     }
   };
 
-  console.log(updates);
-
   const handleDeleteComment = async (commentId: number, updateId: number) => {
     if (!user) return;
 
@@ -315,7 +357,7 @@ export default function LocationDetailScreen() {
         <View style={{ backgroundColor: '#f8fafc', borderRadius: 12, padding: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <Ionicons
-              name={getTypeIcon(location.type) as any}
+              name={getTypeIcon(location.type, location.name) as any}
               size={24}
               color="#3b82f6"
               style={{ marginRight: 12 }}
@@ -365,47 +407,76 @@ export default function LocationDetailScreen() {
             <Text style={{ fontSize: 18, fontWeight: '600', color: '#1f2937' }}>
               Recent Updates
             </Text>
-            <TouchableOpacity
-              onPress={handlePostUpdate}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#2563eb',
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 20,
-              }}
-            >
-              <Ionicons name="add" size={16} color="white" style={{ marginRight: 4 }} />
-              <Text style={{ color: 'white', fontSize: 14, fontWeight: '500' }}>
-                Post Update
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity
+                onPress={() => setFilterLastDay(!filterLastDay)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: filterLastDay ? '#10b981' : '#6b7280',
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 16,
+                  marginRight: 8,
+                }}
+              >
+                <Ionicons 
+                  name={filterLastDay ? "time" : "time-outline"} 
+                  size={14} 
+                  color="white" 
+                  style={{ marginRight: 4 }} 
+                />
+                <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>
+                  {filterLastDay ? 'Last Day' : 'All Time'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handlePostUpdate}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#2563eb',
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                }}
+              >
+                <Ionicons name="add" size={16} color="white" style={{ marginRight: 4 }} />
+                <Text style={{ color: 'white', fontSize: 14, fontWeight: '500' }}>
+                  Post Update
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {updates.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: 40 }}>
               <Ionicons name="chatbubble-outline" size={64} color="#9ca3af" />
               <Text style={{ color: '#6b7280', fontSize: 18, marginTop: 16, textAlign: 'center' }}>
-                No updates yet
+                {filterLastDay ? 'No recent updates' : 'No updates yet'}
               </Text>
               <Text style={{ color: '#9ca3af', textAlign: 'center', marginTop: 8 }}>
-                Be the first to share what's happening here!
+                {filterLastDay 
+                  ? 'No updates from the last 24 hours. Try switching to "All Time" to see older updates.'
+                  : 'Be the first to share what\'s happening here!'
+                }
               </Text>
-              <TouchableOpacity
-                onPress={handlePostUpdate}
-                style={{
-                  marginTop: 16,
-                  backgroundColor: '#2563eb',
-                  paddingHorizontal: 24,
-                  paddingVertical: 12,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: 'white', fontWeight: '600' }}>
-                  Post First Update
-                </Text>
-              </TouchableOpacity>
+              {!filterLastDay && (
+                <TouchableOpacity
+                  onPress={handlePostUpdate}
+                  style={{
+                    marginTop: 16,
+                    backgroundColor: '#2563eb',
+                    paddingHorizontal: 24,
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text style={{ color: 'white', fontWeight: '600' }}>
+                    Post First Update
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             updates.map((update) => (

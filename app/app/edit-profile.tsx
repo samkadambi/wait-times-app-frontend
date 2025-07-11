@@ -35,6 +35,12 @@ interface Interest {
   type: string;
 }
 
+interface City {
+  id: number;
+  name: string;
+  state: string;
+  country: string;
+}
 
 export default function EditProfileScreen() {
   const { user, token, updateUser } = useAuth();
@@ -42,7 +48,7 @@ export default function EditProfileScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [cities, setCities] = useState<string[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
   const [userInterests, setUserInterests] = useState<Interest[]>([]);
   
   // Check if there are unsaved changes
@@ -444,7 +450,7 @@ export default function EditProfileScreen() {
                 >
                   <Picker.Item label="Select a city" value="" />
                   {cities.map((city) => (
-                    <Picker.Item key={city} label={city} value={city} />
+                    <Picker.Item key={city.id} label={city.name} value={city.name} />
                   ))}
                 </Picker>
               </View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -21,14 +21,22 @@ interface Location {
   name: string;
   address: string;
   city_name: string;
-  type: 'park' | 'restaurant' | 'bar' | 'other';
+  type: string;
   img_url: string;
   busyness_level: string;
   busyness_score: number;
   update_count: number;
   latest_comment: string;
   last_updated: string;
+  today_update_count: number;
   is_favorite?: boolean;
+}
+
+interface City {
+  id: number;
+  name: string;
+  state: string;
+  country: string;
 }
 
 export default function HomeScreen() {
@@ -39,17 +47,16 @@ export default function HomeScreen() {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [showFavorites, setShowFavorites] = useState<boolean>(false);
+  const [showFavorites, setShowFavorites] = useState<boolean>(true);
   const [types, setTypes] = useState<string[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
   const { user, logout } = useAuth();
 
   useEffect(() => {
     fetchData();
-    fetchCities();
-  }, []);
+  }, [showFavorites, user]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       let locationsRes;
       
@@ -59,11 +66,9 @@ export default function HomeScreen() {
         locationsRes = await fetch(`${API_BASE_URL}/locations/data`);
       }
 
-      console.log(locationsRes);
-
       const [typesRes, citiesRes] = await Promise.all([
         fetch(`${API_BASE_URL}/locations/types`),
-        fetch(`${API_BASE_URL}/locations/cities`),
+        fetch(`${API_BASE_URL}/cities`),
       ]);
 
       const locationsData = await locationsRes.json();
@@ -103,25 +108,13 @@ export default function HomeScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showFavorites, user]);
 
-  const fetchCities = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/cities`);
-      if (response.ok) {
-        const data = await response.json();
-        setCities(data);
-      }
-    } catch (error) {
-      console.error('Error fetching cities:', error);
-    }
-  };
-
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
-  };
+  }, [fetchData]);
 
   const toggleFavorite = async (locationId: number) => {
     if (!user) {
@@ -141,21 +134,28 @@ export default function HomeScreen() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        
         // Update local state immediately for better UX
         setLocations(prevLocations => 
           prevLocations.map(location => 
             location.id === locationId 
-              ? { ...location, is_favorite: !location.is_favorite }
+              ? { ...location, is_favorite: result.is_favorite }
               : location
           )
         );
         setFilteredLocations(prevFiltered => 
           prevFiltered.map(location => 
             location.id === locationId 
-              ? { ...location, is_favorite: !location.is_favorite }
+              ? { ...location, is_favorite: result.is_favorite }
               : location
           )
         );
+        
+        // If we're in favorites view and the item was unfavorited, refresh the data
+        if (showFavorites && !result.is_favorite) {
+          setTimeout(() => fetchData(), 100); // Small delay to ensure state updates first
+        }
       } else {
         Alert.alert('Error', 'Failed to update favorite');
       }
@@ -221,7 +221,48 @@ export default function HomeScreen() {
     }
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: string, locationName?: string) => {
+    // Check for specific sports courts in the location name
+    if (locationName) {
+      const name = locationName.toLowerCase();
+      
+      // Basketball courts
+      if (name.includes('basketball')) {
+        return 'basketball-outline';
+      }
+      
+      // Tennis courts
+      if (name.includes('tennis')) {
+        return 'tennisball-outline';
+      }
+      
+      // Volleyball courts
+      if (name.includes('volleyball')) {
+        return 'football-outline'; // Ionicons doesn't have volleyball, using football as closest
+      }
+      
+      // Soccer fields
+      if (name.includes('soccer') || name.includes('football field')) {
+        return 'football-outline';
+      }
+      
+      // Baseball fields
+      if (name.includes('baseball') || name.includes('diamond')) {
+        return 'baseball-outline';
+      }
+      
+      // Swimming pools
+      if (name.includes('pool') || name.includes('swimming') || name.includes('beach')) {
+        return 'water-outline';
+      }
+      
+      // Gym/fitness
+      if (name.includes('gym') || name.includes('fitness') || name.includes('workout')) {
+        return 'fitness-outline';
+      }
+    }
+    
+    // Fall back to type-based icons
     switch (type) {
       case 'park':
         return 'leaf-outline';
@@ -265,7 +306,7 @@ export default function HomeScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
             <Ionicons
-              name={getTypeIcon(item.type) as any}
+              name={getTypeIcon(item.type, item.name) as any}
               size={24}
               color="#3b82f6"
               style={{ marginRight: 12 }}
@@ -311,7 +352,7 @@ export default function HomeScreen() {
 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text style={{ fontSize: 12, color: '#9ca3af' }}>
-            {item.update_count} updates
+            {item.today_update_count} updates today
           </Text>
           {item.last_updated && (
             <Text style={{ fontSize: 12, color: '#9ca3af' }}>
@@ -368,7 +409,7 @@ export default function HomeScreen() {
       <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>WaitNSee</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>GoodEye</Text>
             <Text style={{ color: '#6b7280' }}>Know before you go</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -387,7 +428,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                console.log('Profile button pressed');
                 try {
                   router.push('/app/profile');
                 } catch (error) {
@@ -516,10 +556,10 @@ export default function HomeScreen() {
           )}
           {cities.map((city) =>
             renderFilterButton(
-              city,
-              city,
+              city.name,
+              city.name,
               selectedCity,
-              () => setSelectedCity(city)
+              () => setSelectedCity(city.name)
             )
           )}
         </View>
