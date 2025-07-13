@@ -356,7 +356,7 @@ export default function HomeScreen() {
           </Text>
           {item.last_updated && (
             <Text style={{ fontSize: 12, color: '#9ca3af' }}>
-              Updated {new Date(item.last_updated).toLocaleDateString()}
+              Last updated {new Date(item.last_updated).toLocaleDateString()} at {new Date(item.last_updated).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </Text>
           )}
         </View>
@@ -416,7 +416,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               onPress={() => {
                 try {
-                  router.push('/app/search' as any);
+                  router.push('/app/search');
                 } catch (error) {
                   console.error('Navigation error:', error);
                   Alert.alert('Error', 'Could not navigate to search');

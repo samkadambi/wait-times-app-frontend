@@ -37,6 +37,11 @@ export default function ProfileScreen() {
     totalDownvotes: 0,
     averageRating: 0,
   });
+  const [pointsData, setPointsData] = useState({
+    totalPoints: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+  });
   const [profileUser, setProfileUser] = useState<any>(null);
   const [friends, setFriends] = useState<any[]>([]);
   const { user, logout, token } = useAuth();
@@ -133,6 +138,28 @@ export default function ProfileScreen() {
           totalDownvotes,
           averageRating: averageRating,
         });
+      }
+
+      // Load points data
+      if (token) {
+        try {
+          const pointsResponse = await fetch(`${API_BASE_URL}/points/user/${userIdToLoad}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (pointsResponse.ok) {
+            const points = await pointsResponse.json();
+            setPointsData({
+              totalPoints: points.totalPoints,
+              currentStreak: points.currentStreak,
+              longestStreak: points.longestStreak,
+            });
+          }
+        } catch (error) {
+          console.error('Error loading points data:', error);
+        }
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -247,7 +274,7 @@ export default function ProfileScreen() {
           </View>
 
           {/* Stats Grid */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
             <TouchableOpacity 
               style={{ flex: 1, alignItems: 'center', paddingVertical: 16, backgroundColor: '#f8fafc', borderRadius: 8, marginRight: 8 }}
               onPress={() => router.push('/app/friends-list' as any)}
@@ -268,6 +295,34 @@ export default function ProfileScreen() {
                 {stats.averageRating.toFixed(1)}
               </Text>
               <Text style={{ fontSize: 12, color: '#6b7280' }}>Avg Rating</Text>
+            </View>
+          </View>
+
+          {/* Points Section */}
+          <View style={{ backgroundColor: '#fef3c7', borderRadius: 8, padding: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="star" size={20} color="#f59e0b" style={{ marginRight: 8 }} />
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#92400e' }}>Points & Achievements</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#92400e' }}>
+                  {pointsData.totalPoints}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#b45309' }}>Total Points</Text>
+              </View>
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#92400e' }}>
+                  {pointsData.longestStreak}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#b45309' }}>Best Streak</Text>
+              </View>
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#92400e' }}>
+                  {pointsData.currentStreak}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#b45309' }}>Day Streak</Text>
+              </View>
             </View>
           </View>
         </View>

@@ -92,8 +92,6 @@ export default function RegisterScreen() {
     router.back();
   };
 
-  console.log(interests)
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

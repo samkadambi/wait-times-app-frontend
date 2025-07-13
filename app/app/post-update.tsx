@@ -81,12 +81,6 @@ export default function PostUpdateScreen() {
     }
   };
 
-  console.log('selectedCity', selectedCity);
-
-  console.log('locations', locations);
-
-  console.log('user', user);
-
   const uploadImage = async (imageUri: string): Promise<string | null> => {
     setIsUploadingImage(true);
     try {
@@ -196,10 +190,14 @@ export default function PostUpdateScreen() {
       const data = await response.json();
 
       if (response.ok) {
-        // Show success feedback
+        // Show success feedback with points
+        const pointsMessage = data.pointsEarned 
+          ? `Your update has been posted successfully! 🎉\n\nYou earned ${data.pointsEarned} points!\nTotal points: ${data.totalPoints}`
+          : 'Your update has been posted successfully! 🎉\n\nOther users can now see what\'s happening at this location!';
+        
         Alert.alert(
           'Success! 🎉', 
-          'Your update has been posted successfully. Other users can now see what\'s happening at this location!', 
+          pointsMessage, 
           [
             { 
               text: 'View Updates', 

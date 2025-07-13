@@ -102,7 +102,6 @@ export default function EditProfileScreen() {
     });
     if (interestsResponse.ok) {
       const interests = await interestsResponse.json();
-      console.log('interests', interests);
       setUserInterests(interests);
     }
 

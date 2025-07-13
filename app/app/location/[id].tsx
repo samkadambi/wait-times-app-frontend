@@ -9,6 +9,8 @@ import {
   Image,
   RefreshControl,
   TextInput,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +30,7 @@ interface Location {
   update_count: number;
   latest_comment: string;
   last_updated: string;
+  today_update_count: number;
 }
 
 interface Update {
@@ -59,6 +62,8 @@ export default function LocationDetailScreen() {
   const [newComment, setNewComment] = useState<string>('');
   const [commentingOn, setCommentingOn] = useState<number | null>(null);
   const [filterLastDay, setFilterLastDay] = useState(true); // Default to last day filter
+  const [showFullScreenImage, setShowFullScreenImage] = useState(false);
+  const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string>('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -221,6 +226,11 @@ export default function LocationDetailScreen() {
     router.push(`/app/post-update?locationId=${id}&locationName=${location?.name}`);
   };
 
+  const handleImagePress = (imageUrl: string) => {
+    setFullScreenImageUrl(imageUrl);
+    setShowFullScreenImage(true);
+  };
+
   const handleVote = async (updateId: number, vote: 1 | -1) => {
     try {
       const response = await fetch(`${API_BASE_URL}/updates/${updateId}/rate`, {
@@ -333,10 +343,6 @@ export default function LocationDetailScreen() {
     );
   }
 
-  console.log(updates)
-
-  console.log(location)
-
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       {/* Header */}
@@ -382,9 +388,37 @@ export default function LocationDetailScreen() {
             </View>
           </View>
 
+          {/* Location Image */}
+          {location.img_url && (
+            <TouchableOpacity
+              onPress={() => handleImagePress(location.img_url)}
+              style={{ marginBottom: 12 }}
+            >
+              <Image
+                source={{ uri: location.img_url }}
+                style={{
+                  width: '100%',
+                  height: 200,
+                  borderRadius: 8,
+                }}
+                resizeMode="cover"
+              />
+              <View style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                borderRadius: 16,
+                padding: 4,
+              }}>
+                <Ionicons name="expand-outline" size={16} color="white" />
+              </View>
+            </TouchableOpacity>
+          )}
+
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ fontSize: 14, color: '#6b7280' }}>
-              {location.update_count} update{location.update_count === 1 ? '' : 's'}
+              {filterLastDay ? location.today_update_count : location.update_count} update{location.update_count === 1 ? '' : 's'} {filterLastDay ? 'today' : 'total'}
             </Text>
             {location.last_updated && (
               <Text style={{ fontSize: 14, color: '#6b7280' }}>
@@ -515,11 +549,26 @@ export default function LocationDetailScreen() {
                 </Text>
 
                 {update.img_url && (
-                  <Image
-                    source={{ uri: update.img_url }}
-                    style={{ width: '100%', height: 200, borderRadius: 8, marginBottom: 12 }}
-                    resizeMode="cover"
-                  />
+                  <TouchableOpacity
+                    onPress={() => handleImagePress(update.img_url!)}
+                    style={{ marginBottom: 12 }}
+                  >
+                    <Image
+                      source={{ uri: update.img_url }}
+                      style={{ width: '100%', height: 200, borderRadius: 8 }}
+                      resizeMode="cover"
+                    />
+                    <View style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      borderRadius: 16,
+                      padding: 4,
+                    }}>
+                      <Ionicons name="expand-outline" size={16} color="white" />
+                    </View>
+                  </TouchableOpacity>
                 )}
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -637,6 +686,55 @@ export default function LocationDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Full Screen Image Modal */}
+      <Modal
+        visible={showFullScreenImage}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowFullScreenImage(false)}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <TouchableOpacity
+            style={{
+              position: 'absolute',
+              top: 50,
+              right: 20,
+              zIndex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              borderRadius: 20,
+              padding: 8,
+            }}
+            onPress={() => setShowFullScreenImage(false)}
+          >
+            <Ionicons name="close" size={24} color="white" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={{
+              width: Dimensions.get('window').width,
+              height: Dimensions.get('window').height * 0.8,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => setShowFullScreenImage(false)}
+          >
+            <Image
+              source={{ uri: fullScreenImageUrl }}
+              style={{
+                width: '100%',
+                height: '100%',
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 } 
