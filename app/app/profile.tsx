@@ -11,8 +11,9 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
 interface UserUpdate {
   id: number;
@@ -209,7 +210,7 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       {/* Header */}
-      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, paddingTop: 50,  borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>

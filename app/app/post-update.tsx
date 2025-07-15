@@ -9,13 +9,14 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import Constants from 'expo-constants';
+import Dropdown from '../../components/ui/Dropdown';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
 interface Location {
   id: number;
@@ -197,13 +198,7 @@ export default function PostUpdateScreen() {
         
         Alert.alert(
           'Success! 🎉', 
-          pointsMessage, 
-          [
-            { 
-              text: 'View Updates', 
-              onPress: () => router.push('/app/home') 
-            }
-          ]
+          pointsMessage,
         );
         setTimeout(() => {
           router.push('/app/home')
@@ -225,13 +220,13 @@ export default function PostUpdateScreen() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={{ padding: 24 }}>
+      <View style={{ padding: 24, paddingTop: 50, }}>
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
           <TouchableOpacity onPress={handleBack} style={{ marginRight: 16 }}>
             <Text style={{ fontSize: 18, color: '#2563eb' }}>← Back</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center' }}>
             Post Update
           </Text>
         </View>
@@ -239,63 +234,33 @@ export default function PostUpdateScreen() {
         {/* Form */}
         <View style={{ gap: 20 }}>
           {/* City Selection */}
-          <View>
-            <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
-              Select City *
-            </Text>
-            <View style={{
-              borderWidth: 1,
-              borderColor: '#d1d5db',
-              borderRadius: 8,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              backgroundColor: 'white',
-            }}>
-              <Picker
-                selectedValue={selectedCity.name}
-                onValueChange={(itemValue) => setSelectedCity(cities.find((city) => city.name === itemValue) || { id: 0, name: '', state: '', country: '' })}
-                style={{ fontSize: 16 }}
-              >
-                <Picker.Item label="Choose a city" value="" />
-                {cities.map((city) => (
-                  <Picker.Item 
-                    key={city.id} 
-                    label={`${city.name}`} 
-                    value={city.name} 
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
+          <Dropdown
+            label="Select City *"
+            options={[
+              { label: 'Choose a city', value: '' },
+              ...cities.map((city) => ({
+                label: city.name,
+                value: city.name
+              }))
+            ]}
+            selectedValue={selectedCity.name}
+            onValueChange={(itemValue) => setSelectedCity(cities.find((city) => city.name === itemValue) || { id: 0, name: '', state: '', country: '' })}
+            placeholder="Choose a city"
+          />
           {/* Location Selection */}
-          <View>
-            <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
-              Select Location *
-            </Text>
-            <View style={{
-              borderWidth: 1,
-              borderColor: '#d1d5db',
-              borderRadius: 8,
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              backgroundColor: 'white',
-            }}>
-              <Picker
-                selectedValue={selectedLocation}
-                onValueChange={(itemValue) => setSelectedLocation(itemValue)}
-                style={{ fontSize: 16 }}
-              >
-                <Picker.Item label="Choose a location" value="" />
-                {locations.filter((location) => location.city_id === selectedCity.id).map((location) => (
-                  <Picker.Item 
-                    key={location.id} 
-                    label={`${location.name}`} 
-                    value={location.id} 
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
+          <Dropdown
+            label="Select Location *"
+            options={[
+              { label: 'Choose a location', value: '' },
+              ...locations.filter((location) => location.city_id === selectedCity.id).map((location) => ({
+                label: location.name,
+                value: location.id.toString()
+              }))
+            ]}
+            selectedValue={selectedLocation}
+            onValueChange={(itemValue) => setSelectedLocation(itemValue)}
+            placeholder="Choose a location"
+          />
 
           {/* Comment */}
           <View>

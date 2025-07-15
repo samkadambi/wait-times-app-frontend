@@ -13,8 +13,10 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
+import Constants from 'expo-constants';
+import Dropdown from '../../components/ui/Dropdown';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
 interface Location {
   id: number;
@@ -364,35 +366,7 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  const renderFilterButton = (
-    title: string,
-    value: string,
-    currentValue: string,
-    onPress: () => void
-  ) => (
-    <TouchableOpacity
-      style={{
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        marginRight: 8,
-        backgroundColor: currentValue === value ? '#2563eb' : '#f3f4f6',
-        borderWidth: 1,
-        borderColor: currentValue === value ? '#2563eb' : '#d1d5db',
-      }}
-      onPress={onPress}
-    >
-      <Text
-        style={{
-          fontSize: 14,
-          fontWeight: '500',
-          color: currentValue === value ? 'white' : '#374151',
-        }}
-      >
-        {title}
-      </Text>
-    </TouchableOpacity>
-  );
+
 
   if (isLoading) {
     return (
@@ -406,7 +380,7 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       {/* Header */}
-      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>GoodEye</Text>
@@ -502,8 +476,8 @@ export default function HomeScreen() {
 
       {/* Filters */}
       <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <Text style={{ fontSize: 14, fontWeight: '500', color: '#374151' }}>Type</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937' }}>Filters</Text>
           <TouchableOpacity
             onPress={() => {
               setShowFavorites(!showFavorites);
@@ -535,33 +509,38 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-          {renderFilterButton('All', 'all', selectedType, () =>
-            setSelectedType('all')
-          )}
-          {types.map((type) =>
-            renderFilterButton(
-              type.charAt(0).toUpperCase() + type.slice(1),
-              type,
-              selectedType,
-              () => setSelectedType(type)
-            )
-          )}
-        </View>
-
-        <Text style={{ fontSize: 14, fontWeight: '500', color: '#374151', marginBottom: 12, marginTop: 16 }}>City</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {renderFilterButton('All', 'all', selectedCity, () =>
-            setSelectedCity('all')
-          )}
-          {cities.map((city) =>
-            renderFilterButton(
-              city.name,
-              city.name,
-              selectedCity,
-              () => setSelectedCity(city.name)
-            )
-          )}
+        
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Dropdown
+              label="Type"
+              options={[
+                { label: 'All Types', value: 'all' },
+                ...types.map(type => ({
+                  label: type.charAt(0).toUpperCase() + type.slice(1),
+                  value: type
+                }))
+              ]}
+              selectedValue={selectedType}
+              onValueChange={setSelectedType}
+              placeholder="Select type"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Dropdown
+              label="City"
+              options={[
+                { label: 'All Cities', value: 'all' },
+                ...cities.map(city => ({
+                  label: city.name,
+                  value: city.name
+                }))
+              ]}
+              selectedValue={selectedCity}
+              onValueChange={setSelectedCity}
+              placeholder="Select city"
+            />
+          </View>
         </View>
       </View>
 

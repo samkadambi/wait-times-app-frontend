@@ -27,7 +27,7 @@ export default {
       favicon: "./assets/favicon.png",
     },
     extra: {
-      apiUrl: process.env.API_URL || "http://localhost:3001/api",
+      apiUrl: process.env.API_URL || "http://10.0.0.122:3001/api",
       eas: {
         projectId: "0102fd2b-bb76-4459-bfaa-79f368701c11",
       },

@@ -9,11 +9,13 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import Constants from 'expo-constants';
+import Dropdown from '../../components/ui/Dropdown';
+import { Ionicons } from '@expo/vector-icons';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
 interface Interest {
   id: number;
@@ -28,7 +30,7 @@ export default function RegisterScreen() {
   const [location, setLocation] = useState('');
   const [userInterests, setUserInterests] = useState<Interest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [cities, setCities] = useState([]);
+  const [cities, setCities] = useState<{ id: number; name: string; state: string; country: string }[]>([]);
   const [interests, setInterests] = useState<Interest[]>([]);
   const { login } = useAuth();
 
@@ -95,15 +97,13 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: 'white' }}
+      style={{ flex: 1, backgroundColor: 'white', paddingTop: 50, paddingBottom: 50 }}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24 }}>
           {/* Header */}
           <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 16, alignSelf: 'flex-start' }}>
-            <Text style={{ color: '#2563eb', textAlign: 'left', fontWeight: '500' }}>
-              Back
-            </Text>
+            <Ionicons name="arrow-back" size={24} color="#2563eb" />
           </TouchableOpacity>
 
           <View style={{ alignItems: 'center', marginBottom: 32 }}>
@@ -190,28 +190,19 @@ export default function RegisterScreen() {
               />
             </View>
 
-            <View>
-              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Location</Text>
-              <View style={{
-                borderWidth: 1,
-                borderColor: '#d1d5db',
-                borderRadius: 8,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                backgroundColor: 'white',
-              }}>
-                <Picker
-                  selectedValue={location}
-                  onValueChange={(itemValue) => setLocation(itemValue)}
-                  style={{ fontSize: 16 }}
-                >
-                  <Picker.Item label="Select a city" value="" />
-                  {cities.map((city) => (
-                    <Picker.Item key={city} label={city} value={city} />
-                  ))}
-                </Picker>
-              </View>
-            </View>
+            <Dropdown
+              label="Location"
+              options={[
+                { label: 'Select a city', value: '' },
+                ...cities.map((city) => ({
+                  label: city.name,
+                  value: city.name
+                }))
+              ]}
+              selectedValue={location}
+              onValueChange={(itemValue) => setLocation(itemValue)}
+              placeholder="Select a city"
+            />
 
             <View>
               <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Interests (optional)</Text>

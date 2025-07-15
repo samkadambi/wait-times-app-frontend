@@ -15,8 +15,9 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../../hooks/useAuth';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
 interface Location {
   id: number;
@@ -346,7 +347,7 @@ export default function LocationDetailScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       {/* Header */}
-      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
           <TouchableOpacity onPress={() => router.push('/app/home')} style={{ marginRight: 16 }}>
             <Ionicons name="arrow-back" size={24} color="#6b7280" />
@@ -437,8 +438,8 @@ export default function LocationDetailScreen() {
         }
       >
         <View style={{ padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#1f2937' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 10 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1f2937' }}>
               Recent Updates
             </Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -447,11 +448,14 @@ export default function LocationDetailScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   backgroundColor: filterLastDay ? '#10b981' : '#6b7280',
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
                   borderRadius: 16,
                   marginRight: 8,
+                  minWidth: 100,
+                  height: 36,
                 }}
               >
                 <Ionicons 
@@ -469,14 +473,18 @@ export default function LocationDetailScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   backgroundColor: '#2563eb',
                   paddingHorizontal: 16,
                   paddingVertical: 8,
-                  borderRadius: 20,
+                  borderRadius: 16,
+                  marginRight: 8,
+                  minWidth: 100,
+                  height: 36,
                 }}
               >
-                <Ionicons name="add" size={16} color="white" style={{ marginRight: 4 }} />
-                <Text style={{ color: 'white', fontSize: 14, fontWeight: '500' }}>
+                <Ionicons name="add" size={14} color="white" style={{ marginRight: 4 }} />
+                <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>
                   Post Update
                 </Text>
               </TouchableOpacity>

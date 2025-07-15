@@ -11,8 +11,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
-
-const API_BASE_URL = 'http://localhost:3001/api';
+import { apiPost } from '../../utils/api';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -28,25 +27,12 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        await login(data.token, data.user);
-        router.replace('/app/home');
-      } else {
-        Alert.alert('Error', data.message || 'Login failed');
-      }
+      const data = await apiPost('/auth/login', { email, password });
+      await login(data.token, data.user);
+      router.replace('/app/home');
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
