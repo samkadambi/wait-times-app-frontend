@@ -32,6 +32,16 @@ export default {
         projectId: "0102fd2b-bb76-4459-bfaa-79f368701c11",
       },
     },
-    plugins: ["expo-router"],
+    plugins: [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/notification-icon.png",
+          color: "#ffffff",
+          sounds: ["./assets/notification-sound.wav"],
+        },
+      ],
+    ],
   },
 };

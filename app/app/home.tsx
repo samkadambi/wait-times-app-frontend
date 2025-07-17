@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
+import NotificationBadge from '../../components/NotificationBadge';
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
@@ -387,6 +388,7 @@ export default function HomeScreen() {
             <Text style={{ color: '#6b7280' }}>Know before you go</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <NotificationBadge size="medium" style={{ marginRight: 8 }} />
             <TouchableOpacity
               onPress={() => {
                 try {

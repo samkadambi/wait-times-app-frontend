@@ -42,6 +42,9 @@ interface Update {
   date: string;
   upvotes: number;
   downvotes: number;
+  total_people_count: number | null;
+  waiting_people_count: number | null;
+  busyness_level: string;
 }
 
 interface Comment {
@@ -555,6 +558,61 @@ export default function LocationDetailScreen() {
                 <Text style={{ fontSize: 16, color: '#374151', marginBottom: 12, lineHeight: 22 }}>
                   {update.message}
                 </Text>
+
+                {/* People Count Information */}
+                {(update.total_people_count !== null || update.waiting_people_count !== null) && (
+                  <View style={{
+                    backgroundColor: '#f8fafc',
+                    borderRadius: 8,
+                    padding: 12,
+                    marginBottom: 12,
+                    borderLeftWidth: 3,
+                    borderLeftColor: '#3b82f6'
+                  }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                      <Ionicons name="people-outline" size={16} color="#3b82f6" style={{ marginRight: 6 }} />
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1f2937' }}>
+                        Approximate People Count
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                      {update.total_people_count !== null && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Ionicons name="people" size={14} color="#6b7280" style={{ marginRight: 4 }} />
+                          <Text style={{ fontSize: 13, color: '#6b7280' }}>
+                            {update.total_people_count} total
+                          </Text>
+                        </View>
+                      )}
+                      {update.waiting_people_count !== null && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Ionicons name="time-outline" size={14} color="#6b7280" style={{ marginRight: 4 }} />
+                          <Text style={{ fontSize: 13, color: '#6b7280' }}>
+                            {update.waiting_people_count} waiting
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+
+                {/* Busyness Level */}
+                {update.busyness_level && update.busyness_level !== 'unknown' && (
+                  <View style={{
+                    backgroundColor: '#f0f9ff',
+                    borderRadius: 8,
+                    padding: 8,
+                    marginBottom: 12,
+                    alignSelf: 'flex-start'
+                  }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Ionicons name="analytics-outline" size={14} color="#0ea5e9" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 12, fontWeight: '500', color: '#0c4a6e' }}>
+                        {update.busyness_level.replace('_', ' ').toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                )}
 
                 {update.img_url && (
                   <TouchableOpacity

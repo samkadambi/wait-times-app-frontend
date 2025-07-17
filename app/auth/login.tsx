@@ -12,6 +12,7 @@ import {
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { apiPost } from '../../utils/api';
+import notificationService from '@/services/notificationService';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -29,6 +30,16 @@ export default function LoginScreen() {
     try {
       const data = await apiPost('/auth/login', { email, password });
       await login(data.token, data.user);
+      
+      // Initialize notifications after successful login
+      try {
+        await notificationService.initialize();
+        console.log('Push token registered successfully after login');
+      } catch (notificationError) {
+        console.error('Error registering push token after login:', notificationError);
+        // Don't block login if notification registration fails
+      }
+      
       router.replace('/app/home');
     } catch (error) {
       console.error('Login error:', error);

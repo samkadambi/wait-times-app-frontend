@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
+import PeopleCountInput from '../../components/ui/PeopleCountInput';
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
@@ -46,6 +47,8 @@ export default function PostUpdateScreen() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [analyzedBusyness, setAnalyzedBusyness] = useState<string | null>(null);
+  const [totalPeopleCount, setTotalPeopleCount] = useState<number | null>(null);
+  const [waitingPeopleCount, setWaitingPeopleCount] = useState<number | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -185,6 +188,8 @@ export default function PostUpdateScreen() {
           message: comment.trim(),
           img_url: uploadedImageUrl,
           busyness_level: busynessLevel, // Include analyzed busyness level
+          total_people_count: totalPeopleCount,
+          waiting_people_count: waitingPeopleCount,
         }),
       });
 
@@ -286,6 +291,35 @@ export default function PostUpdateScreen() {
             />
           </View>
 
+          {/* People Count Inputs */}
+          <PeopleCountInput
+            label="Approximate number of people at this location (Optional)"
+            value={totalPeopleCount}
+            onValueChange={setTotalPeopleCount}
+            placeholder="e.g., 15"
+            quickOptions={[
+              { label: "5+", value: 5 },
+              { label: "10+", value: 10 },
+              { label: "25+", value: 25 },
+              { label: "50+", value: 50 },
+              { label: "100+", value: 100 },
+            ]}
+          />
+
+          <PeopleCountInput
+            label="Number of people waiting in line (Optional)"
+            value={waitingPeopleCount}
+            onValueChange={setWaitingPeopleCount}
+            placeholder="e.g., 8"
+            quickOptions={[
+              { label: "None", value: 0 },
+              { label: "5+", value: 5 },
+              { label: "10+", value: 10 },
+              { label: "20+", value: 20 },
+              { label: "50+", value: 50 },
+            ]}
+          />
+
           {/* Image Upload */}
           <View>
             <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
@@ -323,6 +357,11 @@ export default function PostUpdateScreen() {
                       <Text style={{ fontSize: 12, color: '#0369a1' }}>
                         Detected: {analyzedBusyness.replace('_', ' ').toUpperCase()}
                       </Text>
+                      {(totalPeopleCount !== null || waitingPeopleCount !== null) && (
+                        <Text style={{ fontSize: 11, color: '#0369a1', marginTop: 2 }}>
+                          Will be enhanced with your people counts
+                        </Text>
+                      )}
                     </View>
                   </View>
                 )}

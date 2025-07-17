@@ -2,9 +2,15 @@ import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { AuthProvider } from '../hooks/useAuth';
+import notificationService from '../services/notificationService';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    // Set up notification listeners (but don't initialize tokens here)
+    notificationService.setupNotificationListeners();
+  }, []);
 
   return (
     <AuthProvider>

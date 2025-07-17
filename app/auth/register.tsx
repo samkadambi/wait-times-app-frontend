@@ -14,6 +14,7 @@ import { useAuth } from '../../hooks/useAuth';
 import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import { Ionicons } from '@expo/vector-icons';
+import notificationService from '../../services/notificationService';
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
@@ -78,6 +79,16 @@ export default function RegisterScreen() {
 
       if (response.ok) {
         await login(data.token, data.user);
+        
+        // Initialize notifications after successful registration
+        try {
+          await notificationService.initialize();
+          console.log('Push token registered successfully after registration');
+        } catch (notificationError) {
+          console.error('Error registering push token after registration:', notificationError);
+          // Don't block registration if notification registration fails
+        }
+        
         router.replace('/app/home');
       } else {
         Alert.alert('Error', data.message || 'Registration failed');

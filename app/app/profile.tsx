@@ -85,6 +85,8 @@ export default function ProfileScreen() {
 
   }, [user, targetUserId]);
 
+  console.log('pointsData', pointsData);
+
   const loadUserProfile = async () => {
     if (!user) {
       Alert.alert('Error', 'User data not found. Please log in again.');
@@ -362,7 +364,7 @@ export default function ProfileScreen() {
                 borderBottomWidth: 1,
                 borderBottomColor: '#f3f4f6',
               }}
-              onPress={() => Alert.alert('Coming Soon', 'Notification settings will be available soon!')}
+              onPress={() => router.push('/app/notification-settings')}
             >
               <Ionicons name="notifications-outline" size={20} color="#6b7280" style={{ marginRight: 16 }} />
               <Text style={{ fontSize: 16, color: '#1f2937', flex: 1 }}>Notifications</Text>

@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import notificationService from '@/services/notificationService';
 
 interface User {
   id: number;
@@ -50,6 +51,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedToken && storedUserData) {
         setToken(storedToken);
         setUser(JSON.parse(storedUserData));
+        
+        // Initialize notifications for already authenticated user
+        try {
+          await notificationService.initialize();
+          console.log('Push token registered successfully for existing session');
+        } catch (notificationError) {
+          console.error('Error registering push token for existing session:', notificationError);
+          // Don't block auth check if notification registration fails
+        }
       } else {
         setToken(null);
         setUser(null);
@@ -79,6 +89,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      // Unregister push token before logout
+      try {
+        const token = await notificationService.getPushToken();
+        if (token) {
+          await notificationService.unregisterPushToken(token);
+          console.log('Push token unregistered successfully during logout');
+        }
+      } catch (notificationError) {
+        console.error('Error unregistering push token during logout:', notificationError);
+        // Don't block logout if notification unregistration fails
+      }
+      
       await Promise.all([
         AsyncStorage.removeItem('userToken'),
         AsyncStorage.removeItem('userData'),
