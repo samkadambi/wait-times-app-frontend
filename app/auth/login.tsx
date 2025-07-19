@@ -66,7 +66,7 @@ export default function LoginScreen() {
               GoodEye
             </Text>
             <Text style={{ fontSize: 18, color: '#6b7280', textAlign: 'center' }}>
-              Know the wait times before you go
+              Know before you go
             </Text>
           </View>
 
