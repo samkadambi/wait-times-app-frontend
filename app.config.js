@@ -15,6 +15,10 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.yourcompany.goodeye",
+      infoPlist: {
+        UIBackgroundModes: ["remote-notification"],
+        ITSAppUsesNonExemptEncryption: false,
+      },
     },
     android: {
       adaptiveIcon: {
