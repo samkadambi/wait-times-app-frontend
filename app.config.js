@@ -31,9 +31,7 @@ export default {
       favicon: "./assets/images/favicon.png",
     },
     extra: {
-      apiUrl:
-        process.env.API_URL ||
-        "http://goodeye-backend.us-east-2.elasticbeanstalk.com/api",
+      apiUrl: "https://d1kweu97gmmrny.cloudfront.net/api",
       eas: {
         projectId: "0102fd2b-bb76-4459-bfaa-79f368701c11",
       },
