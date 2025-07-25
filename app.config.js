@@ -14,7 +14,7 @@ export default {
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.yourcompany.goodeye",
+      bundleIdentifier: "com.samarthkadambi.goodeye",
       infoPlist: {
         UIBackgroundModes: ["remote-notification"],
         ITSAppUsesNonExemptEncryption: false,
@@ -25,7 +25,7 @@ export default {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#FFFFFF",
       },
-      package: "com.yourcompany.goodeye",
+      package: "com.samarthkadambi.goodeye",
     },
     web: {
       favicon: "./assets/images/favicon.png",
