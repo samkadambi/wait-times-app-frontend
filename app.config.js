@@ -7,7 +7,7 @@ export default {
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     splash: {
-      image: "./assets/splash.png",
+      image: "./assets/images/splash-icon.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
@@ -22,28 +22,30 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#FFFFFF",
       },
       package: "com.yourcompany.goodeye",
     },
     web: {
-      favicon: "./assets/favicon.png",
+      favicon: "./assets/images/favicon.png",
     },
     extra: {
-      apiUrl: process.env.API_URL || "http://10.0.0.122:3001/api",
+      apiUrl:
+        process.env.API_URL ||
+        "http://goodeye-backend.us-east-2.elasticbeanstalk.com/api",
       eas: {
         projectId: "0102fd2b-bb76-4459-bfaa-79f368701c11",
       },
     },
     plugins: [
+      "expo-web-browser",
       "expo-router",
       [
         "expo-notifications",
         {
-          icon: "./assets/notification-icon.png",
+          icon: "./assets/icon.png",
           color: "#ffffff",
-          sounds: ["./assets/notification-sound.wav"],
         },
       ],
     ],
