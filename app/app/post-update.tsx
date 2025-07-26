@@ -19,8 +19,6 @@ import PeopleCountInput from '../../components/ui/PeopleCountInput';
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
-console.log(API_BASE_URL);
-
 interface Location {
   id: number;
   name: string;
@@ -90,63 +88,32 @@ export default function PostUpdateScreen() {
   const uploadImage = async (imageUri: string): Promise<string | null> => {
     setIsUploadingImage(true);
     try {
-      console.log('Starting image upload for:', imageUri);
+      // Convert image URI to blob
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
       
-      // Create form data with proper file object for React Native
+      // Create form data
       const formData = new FormData();
+      formData.append('image', blob, 'image.jpg');
       
-      // For React Native, we need to create a file object with proper metadata
-      // Get the file extension from the URI
-      const uriParts = imageUri.split('.');
-      const fileType = uriParts[uriParts.length - 1] || 'jpg';
-      const mimeType = `image/${fileType === 'jpg' ? 'jpeg' : fileType}`;
-      
-      // React Native FormData requires a specific format
-      const imageFile = {
-        uri: imageUri,
-        type: mimeType,
-        name: `image.${fileType}`,
-      };
-      
-      console.log('Image file object:', imageFile);
-      
-      // Try different approaches for React Native
-      try {
-        formData.append('image', imageFile as any);
-      } catch (formDataError) {
-        console.log('FormData append failed, trying alternative approach:', formDataError);
-        // Alternative approach for React Native
-        formData.append('image', {
-          uri: imageUri,
-          type: mimeType,
-          name: `image.${fileType}`,
-        } as any);
-      }
-      
-      console.log('FormData created, uploading to:', `${API_BASE_URL}/upload/image`);
+      //pass tag that says "update-image"
+      formData.append('tag', 'update-image');
       
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
         method: 'POST',
         body: formData,
-        // Don't set Content-Type header - let the browser set it with the boundary
       });
-      
-      console.log('Upload response status:', uploadResponse.status);
       
       if (uploadResponse.ok) {
         const uploadData = await uploadResponse.json();
-        console.log('Upload successful, image URL:', uploadData.imageUrl);
         return uploadData.imageUrl;
       } else {
-        const errorText = await uploadResponse.text();
-        console.error('Upload failed with status:', uploadResponse.status, 'Error:', errorText);
-        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+        throw new Error('Failed to upload image');
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      Alert.alert('Error', `Failed to upload image: ${errorMessage}`);
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
       return null;
     } finally {
       setIsUploadingImage(false);

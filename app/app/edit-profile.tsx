@@ -226,6 +226,9 @@ export default function EditProfileScreen() {
       // Create form data
       const formData = new FormData();
       formData.append('image', blob, 'profile-image.jpg');
+
+      //pass tag that says "profile-image"
+      formData.append('tag', 'profile-image');
       
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
