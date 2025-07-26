@@ -42,6 +42,14 @@ export default function ProfileScreen() {
     totalPoints: 0,
     currentStreak: 0,
     longestStreak: 0,
+    dailyStatus: {
+      dailyPointsEarned: 0,
+      dailyUpdatesCount: 0,
+      dailyPointsRemaining: 100,
+      dailyUpdatesRemaining: 10,
+      dailyPointsLimit: 100,
+      dailyUpdatesLimit: 10
+    }
   });
   const [profileUser, setProfileUser] = useState<any>(null);
   const [friends, setFriends] = useState<any[]>([]);
@@ -158,6 +166,14 @@ export default function ProfileScreen() {
               totalPoints: points.totalPoints,
               currentStreak: points.currentStreak,
               longestStreak: points.longestStreak,
+              dailyStatus: points.dailyStatus || {
+                dailyPointsEarned: 0,
+                dailyUpdatesCount: 0,
+                dailyPointsRemaining: 100,
+                dailyUpdatesRemaining: 10,
+                dailyPointsLimit: 100,
+                dailyUpdatesLimit: 10
+              }
             });
           }
         } catch (error) {
@@ -302,7 +318,7 @@ export default function ProfileScreen() {
           </View>
 
           {/* Points Section */}
-          <View style={{ backgroundColor: '#fef3c7', borderRadius: 8, padding: 16 }}>
+          <View style={{ backgroundColor: '#fef3c7', borderRadius: 8, padding: 16, marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <Ionicons name="star" size={20} color="#f59e0b" style={{ marginRight: 8 }} />
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#92400e' }}>Points & Achievements</Text>
@@ -327,6 +343,41 @@ export default function ProfileScreen() {
                 <Text style={{ fontSize: 12, color: '#b45309' }}>Day Streak</Text>
               </View>
             </View>
+          </View>
+
+          {/* Daily Progress Section */}
+          <View style={{ backgroundColor: '#dbeafe', borderRadius: 8, padding: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="calendar" size={20} color="#2563eb" style={{ marginRight: 8 }} />
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1e40af' }}>Today's Progress</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1e40af' }}>
+                  {pointsData.dailyStatus.dailyPointsEarned}/{pointsData.dailyStatus.dailyPointsLimit}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#3b82f6' }}>Points Earned</Text>
+              </View>
+              <View style={{ alignItems: 'center', flex: 1 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1e40af' }}>
+                  {pointsData.dailyStatus.dailyUpdatesCount}/{pointsData.dailyStatus.dailyUpdatesLimit}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#3b82f6' }}>Updates Posted</Text>
+              </View>
+            </View>
+            <View style={{ backgroundColor: '#e0e7ff', borderRadius: 4, height: 8, marginTop: 8 }}>
+              <View 
+                style={{ 
+                  backgroundColor: '#6366f1', 
+                  borderRadius: 4, 
+                  height: 8, 
+                  width: `${Math.min((pointsData.dailyStatus.dailyPointsEarned / pointsData.dailyStatus.dailyPointsLimit) * 100, 100)}%` 
+                }} 
+              />
+            </View>
+            <Text style={{ fontSize: 10, color: '#6b7280', textAlign: 'center', marginTop: 4 }}>
+              {pointsData.dailyStatus.dailyPointsRemaining} points remaining today
+            </Text>
           </View>
         </View>
 

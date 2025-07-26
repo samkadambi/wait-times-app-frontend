@@ -19,6 +19,8 @@ import PeopleCountInput from '../../components/ui/PeopleCountInput';
 
 const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
+console.log(API_BASE_URL);
+
 interface Location {
   id: number;
   name: string;
@@ -88,29 +90,63 @@ export default function PostUpdateScreen() {
   const uploadImage = async (imageUri: string): Promise<string | null> => {
     setIsUploadingImage(true);
     try {
-      // Convert image URI to blob
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
+      console.log('Starting image upload for:', imageUri);
       
-      // Create form data
+      // Create form data with proper file object for React Native
       const formData = new FormData();
-      formData.append('image', blob, 'image.jpg');
+      
+      // For React Native, we need to create a file object with proper metadata
+      // Get the file extension from the URI
+      const uriParts = imageUri.split('.');
+      const fileType = uriParts[uriParts.length - 1] || 'jpg';
+      const mimeType = `image/${fileType === 'jpg' ? 'jpeg' : fileType}`;
+      
+      // React Native FormData requires a specific format
+      const imageFile = {
+        uri: imageUri,
+        type: mimeType,
+        name: `image.${fileType}`,
+      };
+      
+      console.log('Image file object:', imageFile);
+      
+      // Try different approaches for React Native
+      try {
+        formData.append('image', imageFile as any);
+      } catch (formDataError) {
+        console.log('FormData append failed, trying alternative approach:', formDataError);
+        // Alternative approach for React Native
+        formData.append('image', {
+          uri: imageUri,
+          type: mimeType,
+          name: `image.${fileType}`,
+        } as any);
+      }
+      
+      console.log('FormData created, uploading to:', `${API_BASE_URL}/upload/image`);
       
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
         method: 'POST',
         body: formData,
+        // Don't set Content-Type header - let the browser set it with the boundary
       });
+      
+      console.log('Upload response status:', uploadResponse.status);
       
       if (uploadResponse.ok) {
         const uploadData = await uploadResponse.json();
+        console.log('Upload successful, image URL:', uploadData.imageUrl);
         return uploadData.imageUrl;
       } else {
-        throw new Error('Failed to upload image');
+        const errorText = await uploadResponse.text();
+        console.error('Upload failed with status:', uploadResponse.status, 'Error:', errorText);
+        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      Alert.alert('Error', 'Failed to upload image. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      Alert.alert('Error', `Failed to upload image: ${errorMessage}`);
       return null;
     } finally {
       setIsUploadingImage(false);
@@ -197,9 +233,15 @@ export default function PostUpdateScreen() {
 
       if (response.ok) {
         // Show success feedback with points
-        const pointsMessage = data.pointsEarned 
-          ? `Your update has been posted successfully! 🎉\n\nYou earned ${data.pointsEarned} points!\nTotal points: ${data.totalPoints}`
-          : 'Your update has been posted successfully! 🎉\n\nOther users can now see what\'s happening at this location!';
+        let pointsMessage = '';
+        
+        if (data.dailyLimitReached) {
+          pointsMessage = `Your update has been posted successfully! 🎉\n\n${data.limitMessage}\n\nDaily Progress:\n• Points earned today: ${data.dailyPointsEarned}/100\n• Updates posted today: ${data.dailyUpdatesCount}/10\n\nTotal points: ${data.totalPoints}`;
+        } else if (data.pointsEarned) {
+          pointsMessage = `Your update has been posted successfully! 🎉\n\nYou earned ${data.pointsEarned} points!\n\nDaily Progress:\n• Points earned today: ${data.dailyPointsEarned}/100\n• Updates posted today: ${data.dailyUpdatesCount}/10\n\nTotal points: ${data.totalPoints}`;
+        } else {
+          pointsMessage = 'Your update has been posted successfully! 🎉\n\nOther users can now see what\'s happening at this location!';
+        }
         
         Alert.alert(
           'Success! 🎉', 
@@ -219,6 +261,19 @@ export default function PostUpdateScreen() {
     }
   };
 
+  const testUploadConfig = async () => {
+    try {
+      console.log('Testing upload configuration...');
+      const response = await fetch(`${API_BASE_URL}/upload/test`);
+      const data = await response.json();
+      console.log('Upload config test result:', data);
+      Alert.alert('Upload Config Test', JSON.stringify(data, null, 2));
+    } catch (error) {
+      console.error('Upload config test failed:', error);
+      Alert.alert('Error', 'Failed to test upload configuration');
+    }
+  };
+
   const handleBack = () => {
     router.back();
   };
@@ -231,9 +286,12 @@ export default function PostUpdateScreen() {
           <TouchableOpacity onPress={handleBack} style={{ marginRight: 16 }}>
             <Text style={{ fontSize: 18, color: '#2563eb' }}>← Back</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center' }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center', flex: 1 }}>
             Post Update
           </Text>
+          <TouchableOpacity onPress={testUploadConfig} style={{ padding: 8 }}>
+            <Text style={{ fontSize: 12, color: '#6b7280' }}>Test Upload</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Form */}
