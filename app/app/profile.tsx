@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import Constants from 'expo-constants';
 
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
+const API_BASE_URL = 'http://10.0.0.122:3001/api';
 
 interface UserUpdate {
   id: number;
@@ -92,8 +92,6 @@ export default function ProfileScreen() {
     loadFriends();
 
   }, [user, targetUserId]);
-
-  console.log('pointsData', pointsData);
 
   const loadUserProfile = async () => {
     if (!user) {
@@ -250,36 +248,97 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View style={{ backgroundColor: 'white', padding: 24, marginBottom: 16 }}>
           <View style={{ alignItems: 'center', marginBottom: 24 }}>
-            {profileUser.profile_pic_url ? (
-              <View style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                marginBottom: 16,
-                overflow: 'hidden',
-              }}>
-                <Image
-                  source={{ uri: profileUser.profile_pic_url }}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                  }}
-                />
-              </View>
+            {isOwnProfile ? (
+              // Make profile picture clickable for own profile
+              <TouchableOpacity
+                onPress={() => router.push('/app/edit-profile')}
+                style={{ marginBottom: 16 }}
+              >
+                {profileUser.profile_pic_url ? (
+                  <View style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    overflow: 'hidden',
+                    borderWidth: 2,
+                    borderColor: '#e5e7eb',
+                  }}>
+                    <Image
+                      source={{ uri: profileUser.profile_pic_url }}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    backgroundColor: '#3b82f6',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 2,
+                    borderColor: '#e5e7eb',
+                  }}>
+                    <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white' }}>
+                      {getInitials(profileUser.first_name, profileUser.last_name)}
+                    </Text>
+                    {/* Edit overlay */}
+                    <View style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      backgroundColor: '#3b82f6',
+                      borderRadius: 12,
+                      width: 24,
+                      height: 24,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      borderWidth: 2,
+                      borderColor: 'white',
+                    }}>
+                      <Ionicons name="camera" size={12} color="white" />
+                    </View>
+                  </View>
+                )}
+              </TouchableOpacity>
             ) : (
-              <View style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: '#3b82f6',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: 16,
-              }}>
-                <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white' }}>
-                  {getInitials(profileUser.first_name, profileUser.last_name)}
-                </Text>
-              </View>
+              // Non-clickable profile picture for other users
+              <>
+                {profileUser.profile_pic_url ? (
+                  <View style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    marginBottom: 16,
+                    overflow: 'hidden',
+                  }}>
+                    <Image
+                      source={{ uri: profileUser.profile_pic_url }}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <View style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    backgroundColor: '#3b82f6',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: 16,
+                  }}>
+                    <Text style={{ fontSize: 32, fontWeight: 'bold', color: 'white' }}>
+                      {getInitials(profileUser.first_name, profileUser.last_name)}
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', marginBottom: 4 }}>
               {profileUser.first_name} {profileUser.last_name}

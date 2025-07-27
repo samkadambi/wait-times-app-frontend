@@ -17,7 +17,7 @@ import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import PeopleCountInput from '../../components/ui/PeopleCountInput';
 
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 interface Location {
   id: number;

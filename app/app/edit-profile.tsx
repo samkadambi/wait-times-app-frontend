@@ -18,7 +18,7 @@ import { useAuth } from '../../hooks/useAuth';
 import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
 
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 interface User {
     id: number;
@@ -229,6 +229,8 @@ export default function EditProfileScreen() {
 
       //pass tag that says "profile-image"
       formData.append('tag', 'profile-image');
+
+      //TODO: add support for .heic images
       
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
