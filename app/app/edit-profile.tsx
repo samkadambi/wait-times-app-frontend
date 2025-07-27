@@ -18,7 +18,11 @@ import { useAuth } from '../../hooks/useAuth';
 import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+//const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3001/api';
+const API_BASE_URL = 'http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api';
+
+
+console.log(API_BASE_URL);
 
 interface User {
     id: number;
@@ -225,10 +229,13 @@ export default function EditProfileScreen() {
       
       // Create form data
       const formData = new FormData();
-      formData.append('image', blob, 'profile-image.jpg');
-
       //pass tag that says "profile-image"
       formData.append('tag', 'profile-image');
+      formData.append('image', {
+        uri: imageUri,                // <-- the local file path on device
+        name: 'image.jpg',            // <-- a filename for the server
+        type: 'image/jpeg',           // <-- the MIME type
+      } as any);
 
       //TODO: add support for .heic images
       
@@ -237,6 +244,8 @@ export default function EditProfileScreen() {
         method: 'POST',
         body: formData,
       });
+
+      console.log('uploadResponse: ', uploadResponse);
       
       if (!uploadResponse.ok) {
         throw new Error('Failed to upload image');

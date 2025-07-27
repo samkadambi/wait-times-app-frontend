@@ -17,7 +17,9 @@ import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import PeopleCountInput from '../../components/ui/PeopleCountInput';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api';
+
+console.log('url: ', API_BASE_URL);
 
 interface Location {
   id: number;
@@ -94,17 +96,23 @@ export default function PostUpdateScreen() {
       
       // Create form data
       const formData = new FormData();
-      formData.append('image', blob, 'image.jpg');
-      
-      //pass tag that says "update-image"
       formData.append('tag', 'update-image');
+      formData.append('image', {
+        uri: imageUri,                // <-- the local file path on device
+        name: 'image.jpg',            // <-- a filename for the server
+        type: 'image/jpeg',           // <-- the MIME type
+      } as any);
+
+      console.log('formData: ', formData);
       
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
         method: 'POST',
         body: formData,
       });
-      
+
+      console.log('uploadResponse: ', uploadResponse);
+
       if (uploadResponse.ok) {
         const uploadData = await uploadResponse.json();
         return uploadData.imageUrl;
@@ -176,6 +184,11 @@ export default function PostUpdateScreen() {
         busynessLevel = await analyzeImage(uploadedImageUrl);
         if (busynessLevel) {
           setAnalyzedBusyness(busynessLevel);
+        }
+        else {
+          Alert.alert('Error', 'Failed to analyze image. Please try again.');
+          setIsLoading(false);
+          return; // Stop if image analysis failed
         }
       }
 
