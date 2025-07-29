@@ -37,6 +37,7 @@ interface Location {
 interface Update {
   id: number;
   user_name: string;
+  user_id: number;
   message: string;
   img_url: string | null;
   date: string;
@@ -69,6 +70,9 @@ export default function LocationDetailScreen() {
   const [showFullScreenImage, setShowFullScreenImage] = useState(false);
   const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string>('');
   const { user } = useAuth();
+  
+  // State for collapsible location info
+  const [isLocationInfoExpanded, setIsLocationInfoExpanded] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -349,89 +353,113 @@ export default function LocationDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-      {/* Header */}
+      {/* Fixed Header */}
       <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 24, paddingTop: 50, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-          <TouchableOpacity onPress={() => router.push('/app/home')} style={{ marginRight: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
             <Ionicons name="arrow-back" size={24} color="#6b7280" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1f2937' }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1f2937' }} selectable={true}>
               {location.name}
             </Text>
             <Text style={{ color: '#6b7280' }}>{location.city_name}</Text>
           </View>
         </View>
+      </View>
 
-        {/* Location Info Card */}
-        <View style={{ backgroundColor: '#f8fafc', borderRadius: 12, padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Ionicons
-              name={getTypeIcon(location.type, location.name) as any}
-              size={24}
-              color="#3b82f6"
-              style={{ marginRight: 12 }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937' }}>
-                {location.name}
-              </Text>
-              <Text style={{ fontSize: 14, color: '#6b7280' }}>{location.address}</Text>
-            </View>
-            <View
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 20,
-                backgroundColor: getBusynessColor(location.busyness_level),
-              }}
-            >
-              <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
-                {getBusynessText(location.busyness_level)}
-              </Text>
-            </View>
-          </View>
-
-          {/* Location Image */}
-          {location.img_url && (
-            <TouchableOpacity
-              onPress={() => handleImagePress(location.img_url)}
-              style={{ marginBottom: 12 }}
-            >
-              <Image
-                source={{ uri: location.img_url }}
-                style={{
-                  width: '100%',
-                  height: 200,
-                  borderRadius: 8,
-                }}
-                resizeMode="cover"
+      {/* Collapsible Location Info */}
+      {isLocationInfoExpanded && (
+        <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+          <View style={{ backgroundColor: '#f8fafc', borderRadius: 12, padding: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons
+                name={getTypeIcon(location.type, location.name) as any}
+                size={24}
+                color="#3b82f6"
+                style={{ marginRight: 12 }}
               />
-              <View style={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                borderRadius: 16,
-                padding: 4,
-              }}>
-                <Ionicons name="expand-outline" size={16} color="white" />
+              <View style={{ flex: 1 }}>
+                <Text 
+                  style={{ fontSize: 14, color: '#6b7280' }}
+                  selectable={true}
+                >
+                  {location.address}
+                </Text>
               </View>
-            </TouchableOpacity>
-          )}
+              <View
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 20,
+                  backgroundColor: getBusynessColor(location.busyness_level),
+                }}
+              >
+                <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
+                  {getBusynessText(location.busyness_level)}
+                </Text>
+              </View>
+            </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontSize: 14, color: '#6b7280' }}>
-              {filterLastDay ? location.today_update_count : location.update_count} update{location.update_count === 1 ? '' : 's'} {filterLastDay ? 'today' : 'total'}
-            </Text>
-            {location.last_updated && (
-              <Text style={{ fontSize: 14, color: '#6b7280' }}>
-                Last updated {formatTimeAgo(location.last_updated)}
-              </Text>
+            {/* Location Image */}
+            {location.img_url && (
+              <TouchableOpacity
+                onPress={() => handleImagePress(location.img_url)}
+                style={{ marginBottom: 12 }}
+              >
+                <Image
+                  source={{ uri: location.img_url }}
+                  style={{
+                    width: '100%',
+                    height: 100,
+                    borderRadius: 8,
+                  }}
+                  resizeMode="cover"
+                />
+                <View style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  borderRadius: 16,
+                  padding: 4,
+                }}>
+                  <Ionicons name="expand-outline" size={16} color="white" />
+                </View>
+              </TouchableOpacity>
             )}
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: '#6b7280' }}>
+                {filterLastDay ? location.today_update_count : location.update_count} update{location.update_count === 1 ? '' : 's'} {filterLastDay ? 'today' : 'total'}
+              </Text>
+              {location.last_updated && (
+                <Text style={{ fontSize: 14, color: '#6b7280' }}>
+                  Last updated {formatTimeAgo(location.last_updated)}
+                </Text>
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      )}
+
+      {/* Collapse/Expand Arrow */}
+      <TouchableOpacity
+        onPress={() => setIsLocationInfoExpanded(!isLocationInfoExpanded)}
+        style={{
+          backgroundColor: 'white',
+          paddingVertical: 8,
+          alignItems: 'center',
+          borderBottomWidth: 1,
+          borderBottomColor: '#e5e7eb',
+        }}
+      >
+        <Ionicons 
+          name={isLocationInfoExpanded ? "chevron-up" : "chevron-down"} 
+          size={24} 
+          color="#6b7280" 
+        />
+      </TouchableOpacity>
 
       {/* Updates Section */}
       <ScrollView
@@ -541,17 +569,23 @@ export default function LocationDetailScreen() {
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                   <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#e5e7eb', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#6b7280' }}>
-                      {update.user_name.charAt(0).toUpperCase()}
-                    </Text>
+                    <TouchableOpacity onPress={() => router.push(`/app/profile?userId=${update.user_id}`)}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#6b7280' }}>
+                        {update.user_name.charAt(0).toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '500', color: '#1f2937' }}>
-                      {update.user_name}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: '#9ca3af' }}>
-                      {formatTimeAgo(update.date)}
-                    </Text>
+                    <TouchableOpacity onPress={() => router.push(`/app/profile?userId=${update.user_id}`)}>
+                      <Text style={{ fontSize: 14, fontWeight: '500', color: '#1f2937' }}>
+                        {update.user_name}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push(`/app/profile?userId=${update.user_id}`)}>
+                      <Text style={{ fontSize: 12, color: '#9ca3af' }}>
+                        {formatTimeAgo(update.date)}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
 

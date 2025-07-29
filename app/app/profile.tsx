@@ -16,8 +16,6 @@ import Constants from 'expo-constants';
 //const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3001/api';
 const API_BASE_URL = 'https://d1kweu97gmmrny.cloudfront.net/api';
 
-console.log(API_BASE_URL);
-
 interface UserUpdate {
   id: number;
   location_id: number;

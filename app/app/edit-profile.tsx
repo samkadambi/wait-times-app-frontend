@@ -22,8 +22,6 @@ import Constants from 'expo-constants';
 const API_BASE_URL = 'http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api';
 
 
-console.log(API_BASE_URL);
-
 interface User {
     id: number;
     first_name: string;
@@ -244,8 +242,6 @@ export default function EditProfileScreen() {
         method: 'POST',
         body: formData,
       });
-
-      console.log('uploadResponse: ', uploadResponse);
       
       if (!uploadResponse.ok) {
         throw new Error('Failed to upload image');

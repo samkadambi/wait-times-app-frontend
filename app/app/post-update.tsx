@@ -15,11 +15,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
+import Autocomplete from '../../components/ui/Autocomplete';
 import PeopleCountInput from '../../components/ui/PeopleCountInput';
 
 const API_BASE_URL = 'http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api';
-
-console.log('url: ', API_BASE_URL);
 
 interface Location {
   id: number;
@@ -102,16 +101,12 @@ export default function PostUpdateScreen() {
         name: 'image.jpg',            // <-- a filename for the server
         type: 'image/jpeg',           // <-- the MIME type
       } as any);
-
-      console.log('formData: ', formData);
       
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
         method: 'POST',
         body: formData,
       });
-
-      console.log('uploadResponse: ', uploadResponse);
 
       if (uploadResponse.ok) {
         const uploadData = await uploadResponse.json();
@@ -241,40 +236,26 @@ export default function PostUpdateScreen() {
     }
   };
 
-  const testUploadConfig = async () => {
-    try {
-      console.log('Testing upload configuration...');
-      const response = await fetch(`${API_BASE_URL}/upload/test`);
-      const data = await response.json();
-      console.log('Upload config test result:', data);
-      Alert.alert('Upload Config Test', JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error('Upload config test failed:', error);
-      Alert.alert('Error', 'Failed to test upload configuration');
-    }
-  };
-
   const handleBack = () => {
     router.back();
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: 'white' }}>
-      <View style={{ padding: 24, paddingTop: 50, }}>
-        {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
+      {/* Header */}
+      <View style={{ paddingHorizontal: 24, paddingVertical: 24, paddingTop: 50, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <TouchableOpacity onPress={handleBack} style={{ marginRight: 16 }}>
             <Text style={{ fontSize: 18, color: '#2563eb' }}>← Back</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center', flex: 1 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', flex: 1 }}>
             Post Update
           </Text>
-          <TouchableOpacity onPress={testUploadConfig} style={{ padding: 8 }}>
-            <Text style={{ fontSize: 12, color: '#6b7280' }}>Test Upload</Text>
-          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Form */}
+      {/* Scrollable Form Content */}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
         <View style={{ gap: 20 }}>
           {/* City Selection */}
           <Dropdown
@@ -291,7 +272,7 @@ export default function PostUpdateScreen() {
             placeholder="Choose a city"
           />
           {/* Location Selection */}
-          <Dropdown
+          <Autocomplete
             label="Select Location *"
             options={[
               { label: 'Choose a location', value: '' },
@@ -302,7 +283,8 @@ export default function PostUpdateScreen() {
             ]}
             selectedValue={selectedLocation}
             onValueChange={(itemValue) => setSelectedLocation(itemValue)}
-            placeholder="Choose a location"
+            placeholder="Search for a location..."
+            disabled={!selectedCity.id}
           />
 
           {/* Comment */}
@@ -477,39 +459,55 @@ export default function PostUpdateScreen() {
             )}
           </View>
 
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={{
-              borderRadius: 8,
-              paddingVertical: 16,
-              marginTop: 24,
-              backgroundColor: (isLoading || isUploadingImage) ? '#9ca3af' : '#2563eb',
-            }}
-            onPress={handlePostUpdate}
-            disabled={isLoading || isUploadingImage}
-          >
-            {isLoading ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <ActivityIndicator color="white" style={{ marginRight: 8 }} />
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 18 }}>
-                  Posting...
-                </Text>
-              </View>
-            ) : isUploadingImage ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <ActivityIndicator color="white" style={{ marginRight: 8 }} />
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 18 }}>
-                  Uploading Image...
-                </Text>
-              </View>
-            ) : (
-              <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600', fontSize: 18 }}>
-                Post Update
-              </Text>
-            )}
-          </TouchableOpacity>
         </View>
+      </ScrollView>
+
+      {/* Sticky Submit Button */}
+      <View style={{ 
+        backgroundColor: 'white', 
+        paddingHorizontal: 24, 
+        paddingVertical: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#e5e7eb',
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: -2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+      }}>
+        <TouchableOpacity
+          style={{
+            borderRadius: 8,
+            paddingVertical: 16,
+            backgroundColor: (isLoading || isUploadingImage) ? '#9ca3af' : '#2563eb',
+          }}
+          onPress={handlePostUpdate}
+          disabled={isLoading || isUploadingImage}
+        >
+          {isLoading ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <ActivityIndicator color="white" style={{ marginRight: 8 }} />
+              <Text style={{ color: 'white', fontWeight: '600', fontSize: 18 }}>
+                Posting...
+              </Text>
+            </View>
+          ) : isUploadingImage ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <ActivityIndicator color="white" style={{ marginRight: 8 }} />
+              <Text style={{ color: 'white', fontWeight: '600', fontSize: 18 }}>
+                Uploading Image...
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600', fontSize: 18 }}>
+              Post
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 } 
