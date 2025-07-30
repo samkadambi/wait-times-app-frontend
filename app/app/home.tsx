@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   TextInput,
   Image,
+  SafeAreaView,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -379,9 +381,16 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       {/* Header */}
-      <View style={{ backgroundColor: 'white', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+      <View style={{ 
+        backgroundColor: 'white', 
+        paddingHorizontal: 16, 
+        paddingVertical: 16, 
+        borderBottomWidth: 1, 
+        borderBottomColor: '#e5e7eb',
+        paddingTop: Platform.OS === 'ios' ? 0 : 16,
+      }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View>
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>GoodEye</Text>
@@ -596,6 +605,6 @@ export default function HomeScreen() {
       >
         <Ionicons name="add" size={32} color="white" />
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 } 

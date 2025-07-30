@@ -8,6 +8,8 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
+  SafeAreaView,
+  Platform,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -241,9 +243,16 @@ export default function PostUpdateScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
       {/* Header */}
-      <View style={{ paddingHorizontal: 24, paddingVertical: 24, paddingTop: 50, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}>
+      <View style={{ 
+        paddingHorizontal: 24, 
+        paddingVertical: 16, 
+        backgroundColor: 'white', 
+        borderBottomWidth: 1, 
+        borderBottomColor: '#e5e7eb',
+        paddingTop: Platform.OS === 'ios' ? 0 : 16, // Use SafeAreaView for iOS, manual padding for Android
+      }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <TouchableOpacity onPress={handleBack} style={{ marginRight: 16 }}>
             <Text style={{ fontSize: 18, color: '#2563eb' }}>← Back</Text>
@@ -508,6 +517,6 @@ export default function PostUpdateScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 } 
