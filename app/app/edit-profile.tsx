@@ -224,19 +224,26 @@ export default function EditProfileScreen() {
       // Convert image URI to blob
       const response = await fetch(imageUri);
       const blob = await response.blob();
-      
+
       // Create form data
       const formData = new FormData();
       //pass tag that says "profile-image"
       formData.append('tag', 'profile-image');
-      formData.append('image', {
-        uri: imageUri,                // <-- the local file path on device
-        name: 'image.jpg',            // <-- a filename for the server
-        type: 'image/jpeg',           // <-- the MIME type
-      } as any);
 
-      //TODO: add support for .heic images
-      
+      // if image is uploaded from mobile, use the following format
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        console.log('Uploading image from mobile');
+        formData.append('image', {
+          uri: imageUri,                // <-- the local file path on device
+          name: 'image.jpg',            // <-- a filename for the server
+          type: 'image/jpeg',           // <-- the MIME type
+        } as any);
+      }
+      else if (Platform.OS ==='web') {
+        console.log('Uploading image from web');
+        formData.append('image', blob, 'profile-image.jpg');
+      }
+
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
         method: 'POST',

@@ -15,12 +15,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import Autocomplete from '../../components/ui/Autocomplete';
 import PeopleCountInput from '../../components/ui/PeopleCountInput';
 
 const API_BASE_URL = 'http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api';
+//const API_BASE_URL = 'http://localhost:3001/api';
 
 interface Location {
   id: number;
@@ -39,7 +39,7 @@ interface City {
 }
 
 export default function PostUpdateScreen() {
-  const { locationId, locationName } = useLocalSearchParams<{ locationId?: string; locationName?: string }>();
+  const { locationId } = useLocalSearchParams<{ locationId?: string }>();
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocation, setSelectedLocation] = useState(locationId || '');
   const [comment, setComment] = useState('');
@@ -98,11 +98,21 @@ export default function PostUpdateScreen() {
       // Create form data
       const formData = new FormData();
       formData.append('tag', 'update-image');
-      formData.append('image', {
-        uri: imageUri,                // <-- the local file path on device
-        name: 'image.jpg',            // <-- a filename for the server
-        type: 'image/jpeg',           // <-- the MIME type
-      } as any);
+      
+      // if image is uploaded from mobile, use the following format
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        console.log('Uploading image from mobile');
+        formData.append('image', {
+          uri: imageUri,                // <-- the local file path on device
+          name: 'image.jpg',            // <-- a filename for the server
+          type: 'image/jpeg',           // <-- the MIME type
+        } as any);
+      }
+      else if (Platform.OS ==='web') {
+        console.log('Uploading image from web');
+        formData.append('image', blob, 'update-image.jpg');
+      }
+
       
       // Upload to server
       const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
@@ -125,7 +135,7 @@ export default function PostUpdateScreen() {
     }
   };
 
-  const analyzeImage = async (imageUrl: string): Promise<string | null> => {
+  const analyzeImage = async (imageUrl: string, locationId: string, cityName: string): Promise<string | null> => {
     setIsAnalyzingImage(true);
     try {
       const response = await fetch(`${API_BASE_URL}/analysis/image-busyness`, {
@@ -135,14 +145,20 @@ export default function PostUpdateScreen() {
         },
         body: JSON.stringify({
           imageUrl: imageUrl,
+          locationId: locationId,
+          cityName: cityName,
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         return data.busyness_level;
+      } else if (response.status === 400 && data.busyness_level === 'inaccurate') {
+        // Handle inaccurate image response
+        return 'inaccurate';
       } else {
-        throw new Error('Failed to analyze image');
+        throw new Error(data.message || 'Failed to analyze image');
       }
     } catch (error) {
       console.error('Error analyzing image:', error);
@@ -178,9 +194,24 @@ export default function PostUpdateScreen() {
         }
 
         // Analyze image for busyness if upload was successful
-        busynessLevel = await analyzeImage(uploadedImageUrl);
+        busynessLevel = await analyzeImage(uploadedImageUrl, selectedLocation, selectedCity.name);
         if (busynessLevel) {
-          setAnalyzedBusyness(busynessLevel);
+          if (busynessLevel === 'inaccurate') {
+            Alert.alert(
+              'Image Not Related to Location', 
+              'The uploaded image doesn\'t appear to show the actual location space. Please upload a photo that shows:\n\n• The restaurant/store interior or exterior\n• The seating area or waiting area\n• The actual space where people would be\n\nAvoid uploading selfies, food photos, or unrelated images.',
+              [
+                { text: 'OK', onPress: () => {
+                  setImage(null); // Clear the image so user can try again
+                  setIsLoading(false);
+                }}
+              ]
+            );
+            return; // Stop if image analysis failed
+          }
+          else {
+            setAnalyzedBusyness(busynessLevel);
+          }
         }
         else {
           Alert.alert('Error', 'Failed to analyze image. Please try again.');

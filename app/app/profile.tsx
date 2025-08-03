@@ -48,10 +48,11 @@ export default function ProfileScreen() {
     dailyStatus: {
       dailyPointsEarned: 0,
       dailyUpdatesCount: 0,
-      dailyPointsRemaining: 100,
+      dailyPointsRemaining: null,
       dailyUpdatesRemaining: 10,
-      dailyPointsLimit: 100,
-      dailyUpdatesLimit: 10
+      dailyPointsLimit: null,
+      dailyUpdatesLimit: 10,
+      canEarnPoints: true
     }
   });
   const [profileUser, setProfileUser] = useState<any>(null);
@@ -423,7 +424,7 @@ export default function ProfileScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
               <View style={{ alignItems: 'center', flex: 1 }}>
                 <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1e40af' }}>
-                  {pointsData.dailyStatus.dailyPointsEarned}/{pointsData.dailyStatus.dailyPointsLimit}
+                  {pointsData.dailyStatus.dailyPointsEarned}
                 </Text>
                 <Text style={{ fontSize: 12, color: '#3b82f6' }}>Points Earned</Text>
               </View>
@@ -437,15 +438,18 @@ export default function ProfileScreen() {
             <View style={{ backgroundColor: '#e0e7ff', borderRadius: 4, height: 8, marginTop: 8 }}>
               <View 
                 style={{ 
-                  backgroundColor: '#6366f1', 
+                  backgroundColor: pointsData.dailyStatus.canEarnPoints ? '#6366f1' : '#f59e0b', 
                   borderRadius: 4, 
                   height: 8, 
-                  width: `${Math.min((pointsData.dailyStatus.dailyPointsEarned / pointsData.dailyStatus.dailyPointsLimit) * 100, 100)}%` 
+                  width: `${Math.min((pointsData.dailyStatus.dailyUpdatesCount / pointsData.dailyStatus.dailyUpdatesLimit) * 100, 100)}%` 
                 }} 
               />
             </View>
             <Text style={{ fontSize: 10, color: '#6b7280', textAlign: 'center', marginTop: 4 }}>
-              {pointsData.dailyStatus.dailyPointsRemaining} points remaining today
+              {pointsData.dailyStatus.canEarnPoints 
+                ? `${pointsData.dailyStatus.dailyUpdatesRemaining} more posts can earn points today`
+                : 'You can continue posting, but no more points today'
+              }
             </Text>
           </View>
         </View>
@@ -557,7 +561,8 @@ export default function ProfileScreen() {
               )}
             </View>
           ) : (
-            userUpdates.map((update) => (
+            // only show most recent 5 updates
+            userUpdates.slice(0, 5).map((update) => (
               <View
                 key={update.id}
                 style={{
