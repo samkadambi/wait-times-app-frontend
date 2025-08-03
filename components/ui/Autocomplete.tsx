@@ -62,7 +62,10 @@ export default function Autocomplete({
     setSearchText(option.label);
     onValueChange(option.value);
     setIsOpen(false);
-    inputRef.current?.blur();
+    // Prevent blur from interfering with selection
+    setTimeout(() => {
+      inputRef.current?.blur();
+    }, 50);
   };
 
   const handleInputFocus = () => {
@@ -71,7 +74,7 @@ export default function Autocomplete({
 
   const handleInputBlur = () => {
     // Delay closing to allow for option selection
-    setTimeout(() => setIsOpen(false), 200);
+    setTimeout(() => setIsOpen(false), 150);
   };
 
   const handleClear = () => {
@@ -106,6 +109,7 @@ export default function Autocomplete({
           onPress={() => setIsOpen(!isOpen)} 
           style={styles.dropdownButton}
           disabled={disabled}
+          activeOpacity={0.7}
         >
           <Ionicons 
             name={isOpen ? "chevron-up" : "chevron-down"} 
@@ -130,6 +134,8 @@ export default function Autocomplete({
                   option.value === selectedValue && styles.selectedOption
                 ]}
                 onPress={() => handleSelectOption(option)}
+                activeOpacity={0.7}
+                delayPressIn={0}
               >
                 <Text style={[
                   styles.optionText,

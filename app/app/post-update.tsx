@@ -18,7 +18,9 @@ import { useAuth } from '../../hooks/useAuth';
 import Dropdown from '../../components/ui/Dropdown';
 import Autocomplete from '../../components/ui/Autocomplete';
 import PeopleCountInput from '../../components/ui/PeopleCountInput';
-import { API_BASE_URL } from '../../utils/api';
+import { API_BASE_URL, IMG_UPLOAD_URL } from '../../utils/api';
+
+console.log('url', IMG_UPLOAD_URL);
 
 interface Location {
   id: number;
@@ -39,7 +41,7 @@ interface City {
 export default function PostUpdateScreen() {
   const { locationId } = useLocalSearchParams<{ locationId?: string }>();
   const [locations, setLocations] = useState<Location[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState(locationId || '');
+  const [selectedLocation, setSelectedLocation] = useState<string>(locationId || '');
   const [comment, setComment] = useState('');
   const [cities, setCities] = useState<City[]>([]);
   const [selectedCity, setSelectedCity] = useState<City>({ id: 0, name: '', state: '', country: '' });
@@ -55,6 +57,13 @@ export default function PostUpdateScreen() {
   useEffect(() => {
     fetchLocations();
   }, []);
+
+  // Reset selected location when city changes
+  useEffect(() => {
+    if (selectedCity.id) {
+      setSelectedLocation('');
+    }
+  }, [selectedCity.id]);
 
   const fetchLocations = async () => {
     try {
@@ -113,7 +122,7 @@ export default function PostUpdateScreen() {
 
       
       // Upload to server
-      const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
+      const uploadResponse = await fetch(`${IMG_UPLOAD_URL}/upload/image`, {
         method: 'POST',
         body: formData,
       });
@@ -307,7 +316,11 @@ export default function PostUpdateScreen() {
               }))
             ]}
             selectedValue={selectedCity.name}
-            onValueChange={(itemValue) => setSelectedCity(cities.find((city) => city.name === itemValue) || { id: 0, name: '', state: '', country: '' })}
+            onValueChange={(itemValue) => {
+              const selectedCityData = cities.find((city) => city.name === itemValue) || { id: 0, name: '', state: '', country: '' };
+              console.log('City selected:', selectedCityData);
+              setSelectedCity(selectedCityData);
+            }}
             placeholder="Choose a city"
           />
           {/* Location Selection */}
@@ -315,13 +328,18 @@ export default function PostUpdateScreen() {
             label="Select Location *"
             options={[
               { label: 'Choose a location', value: '' },
-              ...locations.filter((location) => location.city_id === selectedCity.id).map((location) => ({
-                label: location.name,
-                value: location.id.toString()
-              }))
+              ...locations
+                .filter((location) => selectedCity.id && location.city_id === selectedCity.id)
+                .map((location) => ({
+                  label: location.name,
+                  value: location.id.toString()
+                }))
             ]}
             selectedValue={selectedLocation}
-            onValueChange={(itemValue) => setSelectedLocation(itemValue)}
+            onValueChange={(itemValue) => {
+              console.log('Location selected:', itemValue);
+              setSelectedLocation(itemValue);
+            }}
             placeholder="Search for a location..."
             disabled={!selectedCity.id}
           />

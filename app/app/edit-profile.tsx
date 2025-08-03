@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '../../hooks/useAuth';
 import * as ImagePicker from 'expo-image-picker';
-import { API_BASE_URL } from '../../utils/api';
+import { API_BASE_URL, IMG_UPLOAD_URL } from '../../utils/api';
 
 
 interface User {
@@ -242,7 +242,7 @@ export default function EditProfileScreen() {
       }
 
       // Upload to server
-      const uploadResponse = await fetch(`${API_BASE_URL}/upload/image`, {
+      const uploadResponse = await fetch(`${IMG_UPLOAD_URL}/upload/image`, {
         method: 'POST',
         body: formData,
       });

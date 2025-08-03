@@ -71,7 +71,6 @@ export default function NotificationsScreen() {
       if (success) {
         setNotifications(prev => prev.map(notif => ({ ...notif, is_read: true })));
         setUnreadCount(0);
-        Alert.alert('Success', 'All notifications marked as read');
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -206,6 +205,7 @@ export default function NotificationsScreen() {
         borderBottomColor: '#e5e7eb',
         paddingTop: Platform.OS === 'ios' ? 0 : 16,
       }}>
+        {/* Header Row */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
@@ -228,65 +228,89 @@ export default function NotificationsScreen() {
               </View>
             )}
           </View>
-          
-          {unreadCount > 0 && (
-            <TouchableOpacity
-              onPress={markAllAsRead}
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                backgroundColor: '#3b82f6',
-                borderRadius: 6,
-              }}
-            >
-              <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
-                Mark All Read
-              </Text>
-            </TouchableOpacity>
-          )}
+
+          <TouchableOpacity
+            onPress={() => router.push('/app/notification-settings')}
+          >
+            <Ionicons name="settings-outline" size={24} color="#3b82f6" />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {notifications.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
-          <Ionicons name="notifications-off-outline" size={64} color="#9ca3af" />
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#6b7280', marginTop: 16, textAlign: 'center' }}>
-            No Notifications Yet
-          </Text>
-          <Text style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center', marginTop: 8, lineHeight: 20 }}>
-            You'll see notifications here when you receive friend requests, location updates, and other important updates.
-          </Text>
-          
+      {/* Main Content */}
+      <View style={{ flex: 1 }}>
+        {notifications.length === 0 ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
+            <Ionicons name="notifications-off-outline" size={64} color="#9ca3af" />
+            <Text style={{ fontSize: 18, fontWeight: '600', color: '#6b7280', marginTop: 16, textAlign: 'center' }}>
+              No Notifications Yet
+            </Text>
+            <Text style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center', marginTop: 8, lineHeight: 20 }}>
+              You'll see notifications here when you receive friend requests, location updates, and other important updates.
+            </Text>
+            
+            <TouchableOpacity
+              onPress={() => router.push('/app/notification-settings')}
+              style={{
+                marginTop: 24,
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+                backgroundColor: '#3b82f6',
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '600' }}>
+                Notification Settings
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={notifications}
+            renderItem={renderNotification}
+            keyExtractor={(item) => item.id.toString()}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={refreshNotifications}
+                colors={['#3b82f6']}
+                tintColor="#3b82f6"
+              />
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: unreadCount > 0 ? 80 : 20 }}
+          />
+        )}
+      </View>
+
+      {/* Sticky Bottom Button */}
+      {unreadCount > 0 && (
+        <View style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'white',
+          borderTopWidth: 1,
+          borderTopColor: '#e5e7eb',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          paddingBottom: 24,
+        }}>
           <TouchableOpacity
-            onPress={() => router.push('/app/notification-settings')}
+            onPress={markAllAsRead}
             style={{
-              marginTop: 24,
-              paddingHorizontal: 20,
-              paddingVertical: 12,
               backgroundColor: '#3b82f6',
               borderRadius: 8,
+              paddingVertical: 12,
+              alignItems: 'center',
             }}
           >
-            <Text style={{ color: 'white', fontWeight: '600' }}>
-              Notification Settings
+            <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+              Mark All as Read
             </Text>
           </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={notifications}
-          renderItem={renderNotification}
-          keyExtractor={(item) => item.id.toString()}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={refreshNotifications}
-              colors={['#3b82f6']}
-              tintColor="#3b82f6"
-            />
-          }
-          showsVerticalScrollIndicator={false}
-        />
       )}
     </SafeAreaView>
   );

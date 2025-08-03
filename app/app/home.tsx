@@ -441,12 +441,6 @@ export default function HomeScreen() {
                 <Ionicons name="person-outline" size={24} color="#6b7280" />
               )}
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={{ padding: 8 }}
-            >
-              <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-            </TouchableOpacity>
           </View>
         </View>
       </View>
