@@ -84,6 +84,8 @@ export default function NotificationSettingsScreen() {
     }
   };
 
+  console.log(preferences);
+
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafb' }}>
@@ -150,6 +152,7 @@ export default function NotificationSettingsScreen() {
               onValueChange={(value) => updatePreference('friend_requests', value)}
               trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
               thumbColor={preferences.friend_requests ? '#3b82f6' : '#9ca3af'}
+              style={{ width: 40, height: 30 }}
             />
           </View>
 
@@ -168,6 +171,7 @@ export default function NotificationSettingsScreen() {
               onValueChange={(value) => updatePreference('location_updates', value)}
               trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
               thumbColor={preferences.location_updates ? '#3b82f6' : '#9ca3af'}
+              style={{ width: 40, height: 30 }}
             />
           </View>
 
@@ -186,6 +190,7 @@ export default function NotificationSettingsScreen() {
               onValueChange={(value) => updatePreference('points_earned', value)}
               trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
               thumbColor={preferences.points_earned ? '#3b82f6' : '#9ca3af'}
+              style={{ width: 40, height: 30 }}
             />
           </View>
 
@@ -204,6 +209,7 @@ export default function NotificationSettingsScreen() {
               onValueChange={(value) => updatePreference('comments_replies', value)}
               trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
               thumbColor={preferences.comments_replies ? '#3b82f6' : '#9ca3af'}
+              style={{ width: 40, height: 30 }}
             />
           </View>
 
@@ -222,6 +228,7 @@ export default function NotificationSettingsScreen() {
               onValueChange={(value) => updatePreference('general_updates', value)}
               trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
               thumbColor={preferences.general_updates ? '#3b82f6' : '#9ca3af'}
+              style={{ width: 40, height: 30 }}
             />
           </View>
         </View>

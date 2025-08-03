@@ -12,8 +12,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
 import Constants from 'expo-constants';
-
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
+import { API_BASE_URL } from '../../utils/api';
 
 interface FriendRequest {
   id: number;

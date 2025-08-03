@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 
 // Get API URL from environment or fallback to local development
 export const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
+//export const API_BASE_URL = 'http://10.0.0.122:3001/api';
 
 // Helper function to make authenticated API requests
 export const apiRequest = async (

@@ -15,8 +15,8 @@ import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import { Ionicons } from '@expo/vector-icons';
 import notificationService from '../../services/notificationService';
+import { API_BASE_URL } from '../../utils/api';
 
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
 interface Interest {
   id: number;

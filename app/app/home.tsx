@@ -18,8 +18,8 @@ import { useAuth } from '../../hooks/useAuth';
 import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import NotificationBadge from '../../components/NotificationBadge';
+import { API_BASE_URL } from '../../utils/api';
 
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
 
 interface Location {
   id: number;

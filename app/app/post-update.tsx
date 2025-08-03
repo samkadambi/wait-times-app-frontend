@@ -18,9 +18,7 @@ import { useAuth } from '../../hooks/useAuth';
 import Dropdown from '../../components/ui/Dropdown';
 import Autocomplete from '../../components/ui/Autocomplete';
 import PeopleCountInput from '../../components/ui/PeopleCountInput';
-
-const API_BASE_URL = 'http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api';
-//const API_BASE_URL = 'http://localhost:3001/api';
+import { API_BASE_URL } from '../../utils/api';
 
 interface Location {
   id: number;
@@ -156,6 +154,7 @@ export default function PostUpdateScreen() {
         return data.busyness_level;
       } else if (response.status === 400 && data.busyness_level === 'inaccurate') {
         // Handle inaccurate image response
+        console.log('Image is inaccurate');
         return 'inaccurate';
       } else {
         throw new Error(data.message || 'Failed to analyze image');
@@ -199,7 +198,7 @@ export default function PostUpdateScreen() {
           if (busynessLevel === 'inaccurate') {
             Alert.alert(
               'Image Not Related to Location', 
-              'The uploaded image doesn\'t appear to show the actual location space. Please upload a photo that shows:\n\n• The restaurant/store interior or exterior\n• The seating area or waiting area\n• The actual space where people would be\n\nAvoid uploading selfies, food photos, or unrelated images.',
+              'The uploaded image doesn\'t appear to show the actual location space.\n\n Avoid uploading unrelated images.',
               [
                 { text: 'OK', onPress: () => {
                   setImage(null); // Clear the image so user can try again

@@ -13,10 +13,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import Constants from 'expo-constants';
-
-//const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3001/api';
-const API_BASE_URL = 'https://d1kweu97gmmrny.cloudfront.net/api';
+import { API_BASE_URL } from '../../utils/api';
 
 interface UserUpdate {
   id: number;

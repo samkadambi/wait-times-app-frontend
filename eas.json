@@ -8,6 +8,9 @@
       "distribution": "internal",
       "env": {
         "API_URL": "http://localhost:3001/api"
+      },
+      "ios": {
+        "simulator": true
       }
     },
     "preview": {
