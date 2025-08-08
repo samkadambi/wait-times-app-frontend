@@ -2,9 +2,7 @@ import Constants from 'expo-constants';
 
 // Get API URL from environment or fallback to local development
 export const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.0.122:3001/api';
-//export const API_BASE_URL = 'http://10.0.0.122:3001/api';
-
-export const IMG_UPLOAD_URL = 'http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api';
+export const IMG_UPLOAD_URL = Constants.expoConfig?.extra?.imgUploadUrl || 'http://10.0.0.122:3001/api';
 
 // Helper function to make authenticated API requests
 export const apiRequest = async (
