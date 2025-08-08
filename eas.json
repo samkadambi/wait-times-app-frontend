@@ -7,6 +7,14 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "API_BASE_URL": "https://d1kweu97gmmrny.cloudfront.net/api",
+        "IMG_UPLOAD_URL": "http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api"
+      }
+    },
+    "simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
         "API_BASE_URL": "http://localhost:3001/api",
         "IMG_UPLOAD_URL": "http://localhost:3001/api"
       },
