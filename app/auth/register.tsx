@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -16,7 +17,8 @@ import Dropdown from '../../components/ui/Dropdown';
 import { Ionicons } from '@expo/vector-icons';
 import notificationService from '../../services/notificationService';
 import { API_BASE_URL } from '../../utils/api';
-
+// @ts-ignore
+import logo from '../../assets/icon.png';
 
 interface Interest {
   id: number;
@@ -270,7 +272,13 @@ export default function RegisterScreen() {
           {/* Footer */}
           <View style={{ marginTop: 32 }}>
             <Text style={{ color: '#6b7280', textAlign: 'center', fontSize: 14 }}>
-              By creating an account, you agree to our Terms of Service and Privacy Policy
+              By creating an account, you agree to our Terms of Service and{' '}
+              <Text 
+                style={{ color: '#2563eb', textDecorationLine: 'underline' }}
+                onPress={() => router.push('/privacy-policy')}
+              >
+                Privacy Policy
+              </Text>
             </Text>
           </View>
         </View>

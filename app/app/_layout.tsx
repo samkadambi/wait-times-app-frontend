@@ -10,6 +10,9 @@ export default function AppLayout() {
         <Stack.Screen name="profile" />
         <Stack.Screen name="edit-profile" />
         <Stack.Screen name="location" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="notification-settings" />
+        <Stack.Screen name="friends" />
       </Stack>
     </ProtectedRoute>
   );

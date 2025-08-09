@@ -1,6 +1,6 @@
 export default {
   expo: {
-    name: "GoodEye",
+    name: "goodeye",
     slug: "goodeye",
     version: "1.0.1",
     orientation: "portrait",

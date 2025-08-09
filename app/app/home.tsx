@@ -15,7 +15,6 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import NotificationBadge from '../../components/NotificationBadge';
 import { API_BASE_URL } from '../../utils/api';
@@ -121,6 +120,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [fetchData]);
 
+  // Toggle favorite status for a location
   const toggleFavorite = async (locationId: number) => {
     if (!user) {
       Alert.alert('Error', 'Please log in to favorite locations');
@@ -170,6 +170,7 @@ export default function HomeScreen() {
     }
   };
 
+  // Filter locations based on search query, type, and city
   useEffect(() => {
     let filtered = locations;
 

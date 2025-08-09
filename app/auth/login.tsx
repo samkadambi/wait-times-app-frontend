@@ -8,11 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { apiPost } from '../../utils/api';
 import notificationService from '@/services/notificationService';
+// @ts-ignore
+import logo from '../../assets/icon.png';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -62,6 +65,15 @@ export default function LoginScreen() {
         <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24 }}>
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 48 }}>
+            <Image 
+              source={logo}
+              style={{ 
+                width: 80, 
+                height: 80, 
+                marginBottom: 24,
+                resizeMode: 'contain'
+              }}
+            />
             <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#2563eb', marginBottom: 8 }}>
               GoodEye
             </Text>
@@ -150,7 +162,13 @@ export default function LoginScreen() {
           {/* Footer */}
           <View style={{ marginTop: 48 }}>
             <Text style={{ color: '#6b7280', textAlign: 'center', fontSize: 14 }}>
-              By signing in, you agree to our Terms of Service and Privacy Policy
+              By signing in, you agree to our Terms of Service and{' '}
+              <Text 
+                style={{ color: '#2563eb', textDecorationLine: 'underline' }}
+                onPress={() => router.push('/privacy-policy')}
+              >
+                Privacy Policy
+              </Text>
             </Text>
           </View>
         </View>

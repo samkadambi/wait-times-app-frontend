@@ -31,7 +31,6 @@ interface UserUpdate {
 export default function ProfileScreen() {
   const [userUpdates, setUserUpdates] = useState<UserUpdate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [interests, setInterests] = useState<string[]>([]);
   const [stats, setStats] = useState({
     totalUpdates: 0,
     totalUpvotes: 0,
@@ -66,15 +65,6 @@ export default function ProfileScreen() {
       loadUserProfile();
     }
 
-    //get interests from interests table
-    const loadInterests = async () => {
-      const response = await fetch(`${API_BASE_URL}/interests`);
-      if (response.ok) {
-        const interests = await response.json();
-        setInterests(interests);
-      }
-    };
-
     //get friends from friends table
     const loadFriends = async () => {
       const response = await fetch(`${API_BASE_URL}/friends/list`, {
@@ -89,7 +79,6 @@ export default function ProfileScreen() {
       }
     };
 
-    loadInterests();
     loadFriends();
 
   }, [user, targetUserId]);
@@ -101,6 +90,7 @@ export default function ProfileScreen() {
       return;
     }
 
+    // Load profile user data, either the target user when viewing another user's profile, or the current user when viewing their own profile
     const userIdToLoad = targetUserId || user.id;
 
     try {

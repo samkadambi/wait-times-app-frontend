@@ -11,7 +11,6 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import Constants from 'expo-constants';
 import { API_BASE_URL } from '../../utils/api';
 
 interface FriendRequest {

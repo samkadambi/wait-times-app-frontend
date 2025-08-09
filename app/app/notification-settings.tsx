@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
 import notificationService, { NotificationPreferences } from '../../services/notificationService';
 
 export default function NotificationSettingsScreen() {
@@ -23,7 +22,6 @@ export default function NotificationSettingsScreen() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     loadPreferences();
@@ -83,8 +81,6 @@ export default function NotificationSettingsScreen() {
       Alert.alert('Error', 'Failed to send test notification');
     }
   };
-
-  console.log(preferences);
 
   if (isLoading) {
     return (
