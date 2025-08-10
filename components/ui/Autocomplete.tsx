@@ -21,6 +21,7 @@ interface AutocompleteProps {
   onValueChange: (value: string) => void;
   placeholder: string;
   disabled?: boolean;
+  zIndex?: number;
 }
 
 export default function Autocomplete({
@@ -30,6 +31,7 @@ export default function Autocomplete({
   onValueChange,
   placeholder,
   disabled = false,
+  zIndex = 1,
 }: AutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -86,7 +88,7 @@ export default function Autocomplete({
   const selectedOption = options.find(option => option.value === selectedValue);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { zIndex }]}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputContainer}>
         <TextInput
@@ -158,7 +160,6 @@ export default function Autocomplete({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-    zIndex: 1,
   },
   label: {
     color: '#374151',

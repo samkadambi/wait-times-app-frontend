@@ -114,6 +114,13 @@ export default function HomeScreen() {
     }
   }, [showFavorites, user]);
 
+  // set selected city on first page load to user's location if it exists
+  useEffect(() => {
+    if (user?.location) {
+      setSelectedCity(user.location);
+    }
+  }, [user]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
@@ -487,9 +494,6 @@ export default function HomeScreen() {
           <TouchableOpacity
             onPress={() => {
               setShowFavorites(!showFavorites);
-              setSelectedType('all');
-              setSelectedCity('all');
-              setSearchQuery('');
             }}
             style={{
               flexDirection: 'row',
@@ -519,9 +523,9 @@ export default function HomeScreen() {
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Dropdown
-              label="Type"
+              label="Category"
               options={[
-                { label: 'All Types', value: 'all' },
+                { label: 'All', value: 'all' },
                 ...types.map(type => ({
                   label: type.charAt(0).toUpperCase() + type.slice(1),
                   value: type
@@ -529,14 +533,14 @@ export default function HomeScreen() {
               ]}
               selectedValue={selectedType}
               onValueChange={setSelectedType}
-              placeholder="Select type"
+              placeholder="Select category"
             />
           </View>
           <View style={{ flex: 1 }}>
             <Dropdown
               label="City"
               options={[
-                { label: 'All Cities', value: 'all' },
+                { label: 'All', value: 'all' },
                 ...cities.map(city => ({
                   label: city.name,
                   value: city.name

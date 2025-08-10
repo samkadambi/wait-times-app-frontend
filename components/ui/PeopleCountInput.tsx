@@ -97,9 +97,9 @@ const styles = StyleSheet.create({
   },
   label: {
     color: '#374151',
-    fontWeight: '500',
     marginBottom: 8,
     fontSize: 16,
+    fontWeight: 'normal',
   },
   quickOptionsContainer: {
     flexDirection: 'row',
@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     backgroundColor: '#f9fafb',
+    fontWeight: 'normal',
   },
   quickOptionSelected: {
     backgroundColor: '#2563eb',

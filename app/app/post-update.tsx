@@ -306,7 +306,7 @@ export default function PostUpdateScreen() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
         <View style={{ gap: 20 }}>
           {/* City Selection */}
-          <Dropdown
+          <Autocomplete
             label="Select City *"
             options={[
               { label: 'Choose a city', value: '' },
@@ -322,6 +322,8 @@ export default function PostUpdateScreen() {
               setSelectedCity(selectedCityData);
             }}
             placeholder="Choose a city"
+            disabled={false}
+            zIndex={3}
           />
           {/* Location Selection */}
           <Autocomplete
@@ -340,13 +342,14 @@ export default function PostUpdateScreen() {
               console.log('Location selected:', itemValue);
               setSelectedLocation(itemValue);
             }}
-            placeholder="Search for a location..."
+            placeholder={!selectedCity.id ? "Select a city first" : "Search for a location..."}
             disabled={!selectedCity.id}
+            zIndex={2}
           />
 
           {/* Comment */}
           <View>
-            <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
+            <Text style={{ color: '#374151', marginBottom: 8, fontSize: 16, fontWeight: 'normal' }}>
               What's happening? *
             </Text>
             <TextInput
@@ -399,7 +402,7 @@ export default function PostUpdateScreen() {
 
           {/* Image Upload */}
           <View>
-            <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>
+            <Text style={{ color: '#374151', marginBottom: 8, fontSize: 16, fontWeight: 'normal' }}>
               Add Photo (Optional)
             </Text>
             {image ? (

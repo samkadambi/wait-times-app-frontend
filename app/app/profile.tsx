@@ -60,6 +60,8 @@ export default function ProfileScreen() {
   const targetUserId = route.userId ? parseInt(route.userId as string) : null;
   const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
+  console.log('pointsData', pointsData);
+
   useEffect(() => {
     if (user) {
       loadUserProfile();
