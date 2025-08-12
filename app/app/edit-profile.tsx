@@ -18,18 +18,6 @@ import { useAuth } from '../../hooks/useAuth';
 import * as ImagePicker from 'expo-image-picker';
 import { API_BASE_URL, IMG_UPLOAD_URL } from '../../utils/api';
 
-
-interface User {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-    location: string;
-    interests: Interest[];
-    profile_pic_url: string;
-    token?: string;
-}
-
 interface Interest {
   id: number;
   type: string;

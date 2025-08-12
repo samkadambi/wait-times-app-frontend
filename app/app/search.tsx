@@ -13,25 +13,17 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
-import Constants from 'expo-constants';
+import { useAuth, User } from '../../hooks/useAuth';
 import { API_BASE_URL } from '../../utils/api';
 
 
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  location: string;
-  profile_pic_url: string;
-  created_at: string;
+interface Users extends User {
   friendStatus: 'none' | 'pending' | 'accepted' | 'rejected' | 'friends' | 'pending_received';
 }
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<Users[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const { user, token } = useAuth();
@@ -158,7 +150,7 @@ export default function SearchScreen() {
     }
   };
 
-  const renderUser = ({ item }: { item: User }) => (
+  const renderUser = ({ item }: { item: Users }) => (
     <TouchableOpacity
       onPress={() => router.push(`/app/profile?userId=${item.id}` as any)}
       style={{
@@ -247,7 +239,7 @@ export default function SearchScreen() {
           <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>
             {getFriendStatusText(item.friendStatus)}
           </Text>
-                 </View>
+        </View>
        )}
      </TouchableOpacity>
    );

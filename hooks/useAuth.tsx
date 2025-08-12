@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import notificationService from '@/services/notificationService';
 
-interface User {
+export interface User {
   id: number;
   first_name: string;
   last_name: string;
@@ -13,6 +13,7 @@ interface User {
   profile_pic_url?: string | null;
   created_at: string;
   token?: string;
+  is_admin: boolean;
 }
 
 interface AuthContextType {
