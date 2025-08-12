@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -85,8 +86,6 @@ export default function Autocomplete({
     setIsOpen(false);
   };
 
-  const selectedOption = options.find(option => option.value === selectedValue);
-
   return (
     <View style={[styles.container, { zIndex }]}>
       <Text style={styles.label}>{label}</Text>
@@ -97,7 +96,6 @@ export default function Autocomplete({
           value={searchText}
           onChangeText={setSearchText}
           onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
           placeholder={placeholder}
           editable={!disabled}
           placeholderTextColor="#9ca3af"
@@ -107,18 +105,17 @@ export default function Autocomplete({
             <Ionicons name="close-circle" size={20} color="#9ca3af" />
           </TouchableOpacity>
         )}
-        <TouchableOpacity 
+        <Pressable 
           onPress={() => setIsOpen(!isOpen)} 
           style={styles.dropdownButton}
           disabled={disabled}
-          activeOpacity={0.7}
         >
           <Ionicons 
             name={isOpen ? "chevron-up" : "chevron-down"} 
             size={20} 
             color="#6b7280" 
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
       
       {isOpen && filteredOptions.length > 0 && (
@@ -129,15 +126,13 @@ export default function Autocomplete({
             keyboardShouldPersistTaps="handled"
           >
             {filteredOptions.map((option, index) => (
-              <TouchableOpacity
+              <Pressable
                 key={option.value}
                 style={[
                   styles.option,
                   option.value === selectedValue && styles.selectedOption
                 ]}
                 onPress={() => handleSelectOption(option)}
-                activeOpacity={0.7}
-                delayPressIn={0}
               >
                 <Text style={[
                   styles.optionText,
@@ -148,7 +143,7 @@ export default function Autocomplete({
                 {option.value === selectedValue && (
                   <Ionicons name="checkmark" size={16} color="#2563eb" />
                 )}
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </ScrollView>
         </View>

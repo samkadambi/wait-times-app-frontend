@@ -257,11 +257,14 @@ export default function SearchScreen() {
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => router.push('/app/home')} style={{ marginRight: 16 }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 16 }}>
               <Ionicons name="arrow-back" size={24} color="#6b7280" />
             </TouchableOpacity>
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937' }}>Find Friends</Text>
           </View>
+          <TouchableOpacity onPress={() => router.push('/app/friend-requests' as any)} style={{ marginRight: 16 }}>
+            <Ionicons name="people-outline" size={24} color="#6b7280" />
+          </TouchableOpacity>
         </View>
       </View>
 

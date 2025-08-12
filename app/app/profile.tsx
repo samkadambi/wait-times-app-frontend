@@ -60,8 +60,6 @@ export default function ProfileScreen() {
   const targetUserId = route.userId ? parseInt(route.userId as string) : null;
   const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
-  console.log('pointsData', pointsData);
-
   useEffect(() => {
     if (user) {
       loadUserProfile();
@@ -592,7 +590,7 @@ export default function ProfileScreen() {
         <View style={{ backgroundColor: 'white', marginBottom: 24 }}>
           <View style={{ paddingHorizontal: 24, paddingVertical: 16 }}>
             <Text style={{ fontSize: 14, color: '#9ca3af', textAlign: 'center' }}>
-              GoodEye v1.0.0
+              GoodEye v1.0.3
             </Text>
             <Text style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 4 }}>
               Know before you go

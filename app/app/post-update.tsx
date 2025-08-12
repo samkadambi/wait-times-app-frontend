@@ -15,7 +15,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../hooks/useAuth';
-import Dropdown from '../../components/ui/Dropdown';
 import Autocomplete from '../../components/ui/Autocomplete';
 import PeopleCountInput from '../../components/ui/PeopleCountInput';
 import { API_BASE_URL, IMG_UPLOAD_URL } from '../../utils/api';

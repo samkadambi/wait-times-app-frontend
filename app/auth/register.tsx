@@ -8,17 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
-import Constants from 'expo-constants';
 import Dropdown from '../../components/ui/Dropdown';
 import { Ionicons } from '@expo/vector-icons';
 import notificationService from '../../services/notificationService';
 import { API_BASE_URL } from '../../utils/api';
-// @ts-ignore
-import logo from '../../assets/icon.png';
 
 interface Interest {
   id: number;
