@@ -119,7 +119,7 @@ export default function Autocomplete({
       </View>
       
       {isOpen && filteredOptions.length > 0 && (
-        <View style={styles.dropdown}>
+        <View style={[styles.dropdown, { zIndex: zIndex + 1000 }]}>
           <ScrollView 
             style={styles.scrollView}
             nestedScrollEnabled={true}
@@ -155,6 +155,7 @@ export default function Autocomplete({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
+    zIndex: 1,
   },
   label: {
     color: '#374151',
@@ -205,11 +206,12 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 9999,
   },
   scrollView: {
     maxHeight: 200,

@@ -144,6 +144,10 @@ export default function PostUpdateScreen() {
   const analyzeImage = async (imageUrl: string, locationId: string, cityName: string): Promise<string | null> => {
     setIsAnalyzingImage(true);
     try {
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(`${API_BASE_URL}/analysis/image-busyness`, {
         method: 'POST',
         headers: {
@@ -154,7 +158,10 @@ export default function PostUpdateScreen() {
           locationId: locationId,
           cityName: cityName,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
@@ -169,7 +176,18 @@ export default function PostUpdateScreen() {
       }
     } catch (error) {
       console.error('Error analyzing image:', error);
-      Alert.alert('Error', 'Failed to analyze image. Please try again.');
+      
+      // Handle different types of errors
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          Alert.alert('Error', 'Request timed out. Please try again.');
+        } else {
+          Alert.alert('Error', 'Failed to analyze image. Please try again.');
+        }
+      } else {
+        Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      }
+      
       return null;
     } finally {
       setIsAnalyzingImage(false);
@@ -292,7 +310,7 @@ export default function PostUpdateScreen() {
         paddingTop: Platform.OS === 'ios' ? 0 : 16, // Use SafeAreaView for iOS, manual padding for Android
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          <TouchableOpacity onPress={handleBack} style={{ marginRight: 16 }}>
+          <TouchableOpacity onPress={handleBack} style={{ marginRight: 12 }}>
             <Text style={{ fontSize: 18, color: '#2563eb' }}>← Back</Text>
           </TouchableOpacity>
           <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', flex: 1 }}>

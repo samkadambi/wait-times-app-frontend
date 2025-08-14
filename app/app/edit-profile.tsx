@@ -14,6 +14,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import Autocomplete from '../../components/ui/Autocomplete';
 import { useAuth } from '../../hooks/useAuth';
 import * as ImagePicker from 'expo-image-picker';
 import { API_BASE_URL, IMG_UPLOAD_URL } from '../../utils/api';
@@ -435,27 +436,18 @@ export default function EditProfileScreen() {
             </View>
 
             {/* Location */}
-            <View style={{ marginBottom: 20 }}>
-              <Text style={{ color: '#374151', fontWeight: '500', marginBottom: 8 }}>Location</Text>
-              <View style={{
-                borderWidth: 1,
-                borderColor: '#d1d5db',
-                borderRadius: 8,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                backgroundColor: 'white',
-              }}>
-                <Picker
+            <View style={{ marginBottom: 20, zIndex: 9999 }}>
+                <Autocomplete
+                  label="Location"
+                  options={cities.map(city => ({
+                    label: city.name,
+                    value: city.name
+                  }))}
                   selectedValue={location}
-                  onValueChange={(itemValue) => setLocation(itemValue)}
-                  style={{ fontSize: 16 }}
-                >
-                  <Picker.Item label="Select a city" value="" />
-                  {cities.map((city) => (
-                    <Picker.Item key={city.id} label={city.name} value={city.name} />
-                  ))}
-                </Picker>
-              </View>
+                  onValueChange={setLocation}
+                  placeholder="Select a city"
+                  zIndex={9999}
+                />
             </View>
 
             {/* Interests */}

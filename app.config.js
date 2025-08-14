@@ -32,7 +32,8 @@ export default {
     },
     extra: {
       apiUrl: "https://d1kweu97gmmrny.cloudfront.net/api",
-      imgUploadUrl: "http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api",
+      imgUploadUrl:
+        "http://Goodeye-backend-env.eba-gerwdqvn.us-east-2.elasticbeanstalk.com/api",
       eas: {
         projectId: "0102fd2b-bb76-4459-bfaa-79f368701c11",
       },
